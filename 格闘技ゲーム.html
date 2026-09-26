@@ -1,0 +1,2180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ワールド・ファイターズ・アリーナ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#150a2e;
+    --bg-deep2:#241448;
+    --bg-deep3:#33195e;
+    --accent-gold:#ffc93c;
+    --accent-flame:#ff5d3a;
+    --hp-green:#3ddc84;
+    --hp-yellow:#ffcb3c;
+    --hp-red:#ff4747;
+    --text-light:#f5f1ff;
+    --text-dim:#b6a9e0;
+    --panel:rgba(255,255,255,0.06);
+    --panel-border:rgba(255,255,255,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Nunito',sans-serif;
+    color:var(--text-light);
+    background:
+      radial-gradient(ellipse at 20% -10%, #4a2a86 0%, transparent 55%),
+      radial-gradient(ellipse at 100% 110%, #5a1e5c 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-deep2) 55%, var(--bg-deep3) 100%);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 16px 60px;
+  }
+  .app{ width:100%; max-width:980px; }
+  h1,h2,h3{ font-family:'Baloo 2', sans-serif; margin:0; }
+  .site-header{ text-align:center; margin-bottom:28px; }
+  .site-header .kicker{ font-family:'Baloo 2',sans-serif; font-weight:700; color:var(--accent-gold); font-size:15px; }
+  .site-header h1{
+    font-size:clamp(30px,6vw,46px); font-weight:800; line-height:1.1; margin-top:6px;
+    background:linear-gradient(90deg,#ffc93c,#ff8a3c 45%,#ff5d3a);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 6px 30px rgba(255,93,58,0.25);
+  }
+  .site-header p{ color:var(--text-dim); font-size:15px; margin-top:8px; font-weight:700;}
+
+  .view{ display:none; animation:fadein .35s ease; }
+  .view.active{ display:block; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- キャラクター選択 ---------- */
+  .mode-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:18px;
+    margin-top:24px; max-width:680px; margin-left:auto; margin-right:auto;
+  }
+  .mode-card{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:20px;
+    padding:28px 22px; cursor:pointer; text-align:center; color:var(--text-light);
+    transition:transform .15s ease, border-color .15s ease; font-family:inherit;
+  }
+  .mode-card:hover{ transform:translateY(-4px); border-color:var(--accent-gold); }
+  .mode-icon{ font-size:46px; margin-bottom:10px; }
+  .mode-title{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:21px; color:var(--accent-gold); margin-bottom:8px; }
+  .mode-desc{ font-size:13px; color:var(--text-dim); font-weight:700; line-height:1.55; }
+  .mode-badge{
+    display:inline-block; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13px;
+    color:var(--accent-gold); background:rgba(255,201,60,0.12); border:1px solid rgba(255,201,60,0.35);
+    border-radius:999px; padding:5px 14px; margin-bottom:6px;
+  }
+  .back-link{
+    background:none; border:none; color:var(--text-dim); font-family:'Nunito',sans-serif; font-weight:800;
+    font-size:13px; cursor:pointer; padding:6px 4px; text-decoration:underline;
+  }
+  .back-link:hover{ color:var(--text-light); }
+
+  #char-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; margin-top:18px; }
+  .char-card{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
+    padding:16px 14px 14px; cursor:pointer; position:relative;
+    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease; overflow:hidden;
+  }
+  .char-card::before{ content:""; position:absolute; top:0; left:0; right:0; height:5px; background:var(--card-color, var(--accent-gold)); }
+  .char-card:hover{ transform:translateY(-4px); border-color:var(--card-color,var(--accent-gold)); }
+  .char-card.selected{
+    border-color:var(--card-color,var(--accent-gold));
+    box-shadow:0 0 0 2px var(--card-color,var(--accent-gold)), 0 10px 26px rgba(0,0,0,0.35);
+    transform:translateY(-4px);
+  }
+  .char-top{ display:flex; align-items:center; gap:12px; margin-top:4px;}
+  .char-avatar{
+    width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+    font-size:28px; background:color-mix(in srgb, var(--card-color,#888) 30%, #1a1030);
+    border:1px solid var(--card-color,var(--accent-gold)); flex:none;
+  }
+  .char-name-wrap{ min-width:0; }
+  .char-name{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:19px; line-height:1.15;}
+  .char-sub{ font-size:12.5px; color:var(--text-dim); font-weight:700; margin-top:2px;}
+  .char-flag{ font-size:17px; margin-right:4px; }
+  .stat-list{ margin-top:12px; display:flex; flex-direction:column; gap:5px; }
+  .stat-row{ display:grid; grid-template-columns:44px 1fr 20px; align-items:center; gap:8px; }
+  .stat-label{ font-size:11.5px; color:var(--text-dim); font-weight:800; }
+  .stat-track{ height:6px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden; }
+  .stat-fill{ height:100%; border-radius:4px; background:var(--card-color,var(--accent-gold)); }
+  .stat-num{ font-size:11px; text-align:right; color:var(--text-dim); font-weight:800; }
+  .char-special{ margin-top:12px; font-size:12px; color:var(--text-light); background:rgba(0,0,0,0.22); border-radius:10px; padding:8px 10px; font-weight:700; line-height:1.4; }
+  .char-special b{ color:var(--card-color,var(--accent-gold)); }
+
+  .select-footer{ margin-top:26px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .picked-line{ color:var(--text-dim); font-weight:800; font-size:14px; min-height:20px;}
+  .picked-line span{ color:var(--accent-gold); }
+
+  button{ font-family:'Baloo 2',sans-serif; cursor:pointer; border:none; }
+  .btn{
+    font-weight:700; font-size:17px; color:#1a0e33;
+    background:linear-gradient(180deg,#ffe08a,var(--accent-gold));
+    padding:13px 30px; border-radius:14px;
+    box-shadow:0 6px 0 #b8842a, 0 10px 20px rgba(0,0,0,0.35);
+    transition:transform .1s ease, box-shadow .1s ease;
+  }
+  .btn:active{ transform:translateY(4px); box-shadow:0 2px 0 #b8842a, 0 4px 10px rgba(0,0,0,0.3); }
+  .btn:disabled{ opacity:0.35; cursor:not-allowed; box-shadow:none; transform:none; }
+  .btn.secondary{ background:linear-gradient(180deg,#4a3487,#33235e); color:var(--text-light); box-shadow:0 6px 0 #211846, 0 10px 20px rgba(0,0,0,0.3); }
+  .btn.secondary:active{ box-shadow:0 2px 0 #211846; }
+  .btn.flame{ background:linear-gradient(180deg,#ff9a6b,var(--accent-flame)); box-shadow:0 6px 0 #b8351d, 0 10px 20px rgba(0,0,0,0.35); color:#2a0a00; }
+  .btn.flame:active{ box-shadow:0 2px 0 #b8351d; }
+
+  /* ---------- バトル画面（リアルタイム） ---------- */
+  .round-tracker{ display:flex; justify-content:center; gap:10px; margin-bottom:14px; }
+  .round-dot{ width:14px; height:14px; border-radius:50%; border:2px solid var(--text-dim); background:transparent; }
+  .round-dot.win-p1{ background:var(--hp-green); border-color:var(--hp-green); }
+  .round-dot.win-p2{ background:var(--accent-flame); border-color:var(--accent-flame); }
+  .round-label{ text-align:center; color:var(--text-dim); font-weight:800; font-size:13px; margin-bottom:6px;}
+
+  .fight-wrap{
+    position:relative; width:100%; max-width:820px; margin:0 auto;
+    border-radius:22px; overflow:hidden; border:1px solid var(--panel-border);
+    background:#000; box-shadow:0 14px 40px rgba(0,0,0,0.4);
+  }
+  #stage{ display:block; width:100%; height:auto; aspect-ratio:800/380; touch-action:none; }
+
+  /* HP・ゲージ類はキャンバスの外（上）の通常フローに配置し、対戦キャラクターと重ならないようにする */
+  .hud-bar{
+    display:grid; grid-template-columns:1fr auto 1fr; align-items:flex-start; gap:10px;
+    padding:14px 16px 12px; background:linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.1));
+  }
+  .hud-side{ min-width:0; }
+  .hud-side.right{ text-align:right; }
+  .fighter-name{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fighter-sub{ font-size:10.5px; color:var(--text-dim); font-weight:800; }
+  .hp-wrap{ margin-top:6px; }
+  .hp-numbers{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-dim); font-weight:800; margin-bottom:3px;}
+  .hud-side.right .hp-numbers{ flex-direction:row-reverse; }
+  .hp-track{ height:12px; border-radius:7px; background:rgba(0,0,0,0.5); overflow:hidden; border:1px solid rgba(255,255,255,0.15);}
+  .hp-fill{ height:100%; background:var(--hp-green); transition:width .3s ease, background .3s ease; }
+  .hud-side.right .hp-fill{ margin-left:auto; }
+  .gauge-wrap{ margin-top:6px; display:flex; gap:3px; align-items:center; font-size:10px; color:var(--text-dim); font-weight:800;}
+  .hud-side.right .gauge-wrap{ justify-content:flex-end; }
+  .gauge-star{ font-size:12px; opacity:0.3; }
+  .gauge-star.filled{ opacity:1; }
+
+  .hud-controls{ display:flex; gap:8px; align-items:center; padding-top:2px; }
+  .ctrl-btn{
+    width:32px; height:32px; border-radius:50%; border:1px solid rgba(255,255,255,0.25);
+    background:rgba(255,255,255,0.08); color:#fff; font-size:14px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-family:inherit; flex:none;
+  }
+  .ctrl-btn:hover{ background:rgba(255,255,255,0.18); }
+
+  .stage-inner{ position:relative; }
+  .center-overlay{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+  .center-overlay .big-text{
+    font-family:'Baloo 2',sans-serif; font-size:clamp(34px,8vw,58px); font-weight:800; color:#fff;
+    text-shadow:0 4px 0 rgba(0,0,0,0.45), 0 0 30px rgba(255,201,60,0.55);
+    animation:popbig .28s ease;
+  }
+  @keyframes popbig{ 0%{ transform:scale(0.5); opacity:0;} 60%{ transform:scale(1.12);} 100%{ transform:scale(1); opacity:1;} }
+
+  .pause-overlay{
+    position:absolute; inset:0; background:rgba(10,5,25,0.78); z-index:10;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pause-box{ text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px; padding:20px; }
+  .pause-title{ font-family:'Baloo 2',sans-serif; font-size:clamp(24px,6vw,32px); font-weight:800; color:#fff; }
+
+  .key-legend{ display:flex; flex-wrap:wrap; justify-content:center; gap:9px; margin-top:16px; }
+  .key-chip{
+    display:flex; align-items:center; gap:7px; background:var(--panel); border:1px solid var(--panel-border);
+    border-radius:11px; padding:7px 12px; font-size:12.5px; font-weight:800; color:var(--text-dim);
+    transition:all .08s ease;
+  }
+  .key-chip kbd{
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25); border-bottom-width:2px;
+    border-radius:6px; padding:2px 7px; font-family:'Baloo 2',sans-serif; font-size:12.5px; color:var(--text-light); min-width:14px; text-align:center;
+  }
+  .key-chip.active{ border-color:var(--accent-gold); color:var(--text-light); background:rgba(255,201,60,0.16); transform:translateY(1px); }
+  .key-chip.active kbd{ background:var(--accent-gold); color:#1a0e33; border-color:var(--accent-gold); }
+  .key-chip.special.ready kbd{ box-shadow:0 0 0 2px rgba(255,93,58,0.5); }
+  .key-chip.special.ready{ border-color:var(--accent-flame); }
+
+  .pc-note{ text-align:center; color:var(--text-dim); font-size:12px; font-weight:700; margin-top:10px; }
+
+  .touch-controls{
+    display:flex; justify-content:space-between; align-items:flex-end; gap:16px;
+    margin-top:18px; user-select:none; -webkit-user-select:none; flex-wrap:wrap;
+  }
+  .touch-btn{
+    width:58px; height:58px; border-radius:16px; background:var(--panel); border:1px solid var(--panel-border);
+    color:var(--text-light); font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.1;
+    touch-action:none; -webkit-tap-highlight-color:transparent;
+  }
+  .touch-btn small{ font-size:8.5px; font-weight:800; color:var(--text-dim); margin-top:1px; }
+  .touch-btn:active{ background:rgba(255,201,60,0.22); border-color:var(--accent-gold); transform:scale(0.93); }
+  .dpad{ display:grid; grid-template-columns:58px 58px 58px; grid-template-rows:58px 58px 58px; gap:7px; }
+  .dpad .spacer{ visibility:hidden; }
+  .action-buttons{ display:flex; gap:12px; align-items:flex-end; }
+  .touch-btn.attack{ border-color:rgba(255,93,58,0.4); }
+  .touch-btn.special.ready{ border-color:var(--accent-flame); box-shadow:0 0 0 2px rgba(255,93,58,0.45); }
+
+  /* ---------- 結果画面 ---------- */
+  #result-view{ text-align:center; }
+  .result-badge{ font-size:60px; margin:10px 0 4px; }
+  #result-title{ font-size:clamp(28px,6vw,40px); font-weight:800; }
+  #result-sub{ color:var(--text-dim); font-weight:800; margin-top:6px; }
+  .result-actions{ display:flex; gap:12px; justify-content:center; margin-top:26px; flex-wrap:wrap; }
+
+  .hidden{ display:none !important; }
+
+  @media (max-width:420px){
+    .touch-controls{ gap:10px; }
+    .dpad{ grid-template-columns:50px 50px 50px; grid-template-rows:50px 50px 50px; gap:6px; }
+    .action-buttons{ gap:8px; }
+    .touch-btn{ width:50px; height:50px; font-size:16px; }
+    .touch-btn small{ font-size:7.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="site-header">
+    <div class="kicker">1対1・タイマン勝負</div>
+    <h1>ワールド・ファイターズ・アリーナ</h1>
+    <p>世界12の戦士から1人選んで、キーボードで操作してバトルしよう！</p>
+  </div>
+
+  <!-- ============ モード選択画面 ============ -->
+  <div id="mode-view" class="view active">
+    <div class="mode-grid">
+      <button class="mode-card" id="mode-free">
+        <div class="mode-icon">🤝</div>
+        <div class="mode-title">フリー対戦</div>
+        <div class="mode-desc">好きなキャラクターで、ランダムに選ばれた相手と1本勝負(2本先取)。<br>気軽に何度でも遊べる。</div>
+      </button>
+      <button class="mode-card" id="mode-arcade">
+        <div class="mode-icon">🏆</div>
+        <div class="mode-title">アーケードモード</div>
+        <div class="mode-desc">1人選んだら、5人の相手と連続対戦！<br>5連勝でクリア。負けたらそこでゲームオーバー。<br>最後は秘密の強敵が待っている…</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ キャラクター選択画面 ============ -->
+  <div id="select-view" class="view">
+    <div style="text-align:center;">
+      <button class="back-link" id="back-to-mode-btn">◀ モード選択にもどる</button>
+    </div>
+    <div id="select-mode-badge" style="text-align:center; margin-top:8px;"></div>
+    <div id="char-grid"></div>
+    <div class="select-footer">
+      <div class="picked-line" id="picked-line">戦うキャラクターをタップしてね</div>
+      <button class="btn flame" id="start-battle-btn" disabled>バトル開始！</button>
+    </div>
+  </div>
+
+  <!-- ============ バトル画面（リアルタイム操作） ============ -->
+  <div id="battle-view" class="view">
+    <div class="round-label" id="round-label">1回戦</div>
+    <div class="round-tracker" id="round-tracker"></div>
+
+    <div class="fight-wrap">
+      <div class="hud-bar">
+        <div class="hud-side left">
+          <div class="fighter-name" id="p1-name"></div>
+          <div class="fighter-sub" id="p1-sub"></div>
+          <div class="hp-wrap">
+            <div class="hp-numbers"><span>HP</span><span id="p1-hp-num"></span></div>
+            <div class="hp-track"><div class="hp-fill" id="p1-hp-fill"></div></div>
+          </div>
+          <div class="gauge-wrap" id="p1-gauge"></div>
+        </div>
+        <div class="hud-controls">
+          <button class="ctrl-btn" id="pause-btn" title="一時停止">⏸️</button>
+          <button class="ctrl-btn" id="mute-btn" title="音のオン/オフ">🔊</button>
+        </div>
+        <div class="hud-side right">
+          <div class="fighter-name" id="p2-name"></div>
+          <div class="fighter-sub" id="p2-sub"></div>
+          <div class="hp-wrap">
+            <div class="hp-numbers"><span id="p2-hp-num"></span><span>HP</span></div>
+            <div class="hp-track"><div class="hp-fill" id="p2-hp-fill"></div></div>
+          </div>
+          <div class="gauge-wrap" id="p2-gauge"></div>
+        </div>
+      </div>
+      <div class="stage-inner">
+        <canvas id="stage" width="800" height="380"></canvas>
+        <div class="center-overlay" id="center-overlay"></div>
+        <div class="pause-overlay hidden" id="pause-overlay">
+          <div class="pause-box">
+            <div class="pause-title">⏸️ 一時停止中</div>
+            <button class="btn flame" id="resume-btn">再開する</button>
+            <button class="btn secondary" id="quit-to-mode-btn">モード選択にもどる</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="key-legend">
+      <div class="key-chip" data-keys="ArrowLeft,ArrowRight"><kbd>←</kbd><kbd>→</kbd>移動</div>
+      <div class="key-chip" data-keys="ArrowUp"><kbd>↑</kbd>ジャンプ</div>
+      <div class="key-chip" data-keys="ArrowDown"><kbd>↓</kbd>ガード</div>
+      <div class="key-chip" data-keys="ShiftLeft,ShiftRight"><kbd>Shift</kbd>しゃがむ</div>
+      <div class="key-chip" data-keys="KeyZ"><kbd>Z</kbd>パンチ</div>
+      <div class="key-chip" data-keys="KeyX"><kbd>X</kbd>キック（しゃがみ中は下段蹴り）</div>
+      <div class="key-chip special" data-keys="KeyC" id="chip-special"><kbd>C</kbd>ひっさつわざ</div>
+      <div class="key-chip hidden" data-keys="KeyV" id="chip-roundhouse"><kbd>V</kbd>かいてんげり</div>
+    </div>
+    <div class="pc-note">★ キーボード（← → ↑ ↓ B Z X C）でも、下のボタンをタップしても操作できるよ。Escキーでも一時停止できるよ。</div>
+
+    <div class="touch-controls">
+      <div class="dpad">
+        <div class="spacer"></div>
+        <button class="touch-btn" id="tc-up">↑</button>
+        <div class="spacer"></div>
+        <button class="touch-btn" id="tc-left">←</button>
+        <button class="touch-btn" id="tc-guard">🛡️<small>ガード</small></button>
+        <button class="touch-btn" id="tc-right">→</button>
+        <div class="spacer"></div>
+        <button class="touch-btn" id="tc-crouch">🦵<small>しゃがむ</small></button>
+        <div class="spacer"></div>
+      </div>
+      <div class="action-buttons">
+        <button class="touch-btn attack" id="tc-punch">Z<small>パンチ</small></button>
+        <button class="touch-btn attack" id="tc-kick">X<small>キック</small></button>
+        <button class="touch-btn special" id="tc-special">C<small>必殺技</small></button>
+        <button class="touch-btn attack hidden" id="tc-roundhouse">V<small>かいてん蹴り</small></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 結果画面 ============ -->
+  <div id="result-view" class="view">
+    <div class="result-badge">🏆</div>
+    <h2 id="result-title">〇〇のかち！</h2>
+    <div id="result-sub"></div>
+    <div class="result-actions" id="free-actions">
+      <button class="btn flame" id="rematch-btn">もう一度たたかう</button>
+      <button class="btn secondary" id="reselect-btn">キャラクターをえらびなおす</button>
+    </div>
+    <div class="result-actions hidden" id="arcade-actions">
+      <button class="btn flame" id="arcade-retry-btn">アーケードに再挑戦</button>
+      <button class="btn secondary" id="arcade-back-btn">モード選択にもどる</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   キャラクターデータ（世界12カ国の代表選手）
+   power / speed / jump / stamina は 1〜10 の10段階評価
+========================================================= */
+const CHARACTERS = [
+  { id:'takeru', name:'タケル', country:'日本', flag:'🇯🇵', color:'#e63946', avatar:'🐉', skin:'#f3c9a0',
+    tagline:'小学5年生・頭脳派ストラテジスト',
+    power:5, speed:6, jump:5, stamina:7,
+    scale:0.85, torsoWidthMult:0.95, headScale:1.1, hair:'spiky', facialHair:false, gender:'m',
+    special:{ name:'ごうかの ブレス', emoji:'🔥', desc:'口から炎を吐いて相手を焼きつくす必殺の遠距離攻撃！' },
+    extraMove:{ name:'かいてんげり（回し蹴り）', key:'V', desc:'命中率は低いものの、当たれば大ダメージを与える一撃必殺の蹴り技！' } },
+  { id:'wataru', name:'ワタル', country:'日本', flag:'🇯🇵', color:'#ff6f3c', avatar:'🐒', skin:'#f6d2ae',
+    tagline:'小学3年生・跳躍力バツグンの俊足ファイター',
+    power:5, speed:7, jump:9, stamina:4,
+    scale:0.5, torsoWidthMult:0.85, headScale:1.25, hair:'short', facialHair:false, gender:'m',
+    special:{ name:'ロケットストレートパンチ', emoji:'🤜', desc:'ゲージが★3つ貯まると出せる、力いっぱいのストレートパンチ！' },
+    extraMove:{ name:'ロケットパンチ発射', key:'V', desc:'1回の対戦(試合)につき3回だけ、手からロケットを発射できる特別な遠距離攻撃！' } },
+  { id:'jake', name:'ジェイク', country:'アメリカ', flag:'🇺🇸', color:'#4d8fdd', avatar:'🥊', skin:'#e8b48c',
+    tagline:'パワフルボクサー',
+    power:8, speed:6, jump:4, stamina:7,
+    scale:1.1, torsoWidthMult:1.25, headScale:1.0, hair:'short', facialHair:false, gender:'m',
+    special:{ name:'サンダーアッパー', emoji:'⚡', desc:'稲妻のような速さで繰り出す強烈な上突き！' } },
+  { id:'carlos', name:'カルロス', country:'ブラジル', flag:'🇧🇷', color:'#2a9d8f', avatar:'🤸', skin:'#c98a5c',
+    tagline:'カポエイラの舞うファイター',
+    power:5, speed:8, jump:8, stamina:4,
+    scale:0.95, torsoWidthMult:0.82, headScale:1.0, hair:'mohawk', facialHair:false, gender:'m',
+    special:{ name:'ジンガ・スピンキック', emoji:'🌀', desc:'リズミカルなステップから繰り出す回転キック！' } },
+  { id:'ivan', name:'イワン', country:'ロシア', flag:'🇷🇺', color:'#8338ec', avatar:'🐻', skin:'#f0c8a0',
+    tagline:'サンボの怪力レスラー',
+    power:9, speed:4, jump:3, stamina:9,
+    scale:1.2, torsoWidthMult:1.4, headScale:1.0, hair:'bald', facialHair:true, gender:'m',
+    special:{ name:'ベアハッグスラム', emoji:'💥', desc:'相手をがっちり抱えて豪快に叩きつける！' } },
+  { id:'meilin', name:'メイリン', country:'中国', flag:'🇨🇳', color:'#ffb703', avatar:'🐼', skin:'#f0cfa8',
+    tagline:'カンフーの技巧派',
+    power:6, speed:7, jump:6, stamina:6,
+    scale:0.9, torsoWidthMult:0.85, headScale:1.0, hair:'ponytail', facialHair:false, gender:'f',
+    special:{ name:'昇龍拳（しょうりゅうけん）', emoji:'🐲', desc:'気を練りあげて放つ、竜が昇るような一撃！' } },
+  { id:'diego', name:'ディエゴ', country:'メキシコ', flag:'🇲🇽', color:'#ef476f', avatar:'🎭', skin:'#d8a06c',
+    tagline:'ルチャリブレの覆面戦士',
+    power:6, speed:6, jump:9, stamina:5,
+    scale:1.0, torsoWidthMult:1.0, headScale:1.0, hair:'mohawk', facialHair:false, gender:'m',
+    special:{ name:'エアプランチャ', emoji:'🤾', desc:'ロープを使って高く舞い上がり、空中から急降下！' } },
+  { id:'amara', name:'アマラ', country:'ナイジェリア', flag:'🇳🇬', color:'#06d6a0', avatar:'🦁', skin:'#8a5230',
+    tagline:'伝統レスリングの女王',
+    power:9, speed:5, jump:5, stamina:8,
+    scale:1.05, torsoWidthMult:1.1, headScale:1.0, hair:'ponytail', facialHair:false, gender:'f',
+    special:{ name:'ライオンスラム', emoji:'🦁', desc:'百獣の王のような力強さで相手を投げ飛ばす！' } },
+  { id:'priya', name:'プリヤ', country:'インド', flag:'🇮🇳', color:'#f77f00', avatar:'🐍', skin:'#c9895c',
+    tagline:'カラリパヤットの俊敏な使い手',
+    power:5, speed:9, jump:6, stamina:5,
+    scale:0.85, torsoWidthMult:0.78, headScale:1.0, hair:'long', facialHair:false, gender:'f',
+    special:{ name:'コブラストライク', emoji:'🐍', desc:'ヘビのようにしなやかで素早い連続突き！' } },
+  { id:'minji', name:'ミンジ', country:'韓国', flag:'🇰🇷', color:'#3a86ff', avatar:'🦅', skin:'#f3cba3',
+    tagline:'テコンドーの華麗な蹴り技師',
+    power:5, speed:8, jump:9, stamina:4,
+    scale:0.82, torsoWidthMult:0.88, headScale:1.05, hair:'ponytail', facialHair:false, gender:'f',
+    special:{ name:'飛び回し蹴り', emoji:'🦶', desc:'高くジャンプして繰り出す華麗な回転蹴り！' } },
+  { id:'emma', name:'エマ', country:'イギリス', flag:'🇬🇧', color:'#c1121f', avatar:'👑', skin:'#f0c4a0',
+    tagline:'正統派ボクシングの貴公子',
+    power:7, speed:7, jump:4, stamina:7,
+    scale:1.0, torsoWidthMult:0.92, headScale:1.0, hair:'short', facialHair:false, gender:'m',
+    special:{ name:'ロイヤルコンビネーション', emoji:'👑', desc:'左右からたたみかける、気品あふれる連続パンチ！' } },
+  { id:'layla', name:'レイラ', country:'エジプト', flag:'🇪🇬', color:'#ffd166', avatar:'🦂', skin:'#c88a52',
+    tagline:'砂漠育ちのタフネスファイター',
+    power:6, speed:5, jump:5, stamina:9,
+    scale:1.05, torsoWidthMult:1.0, headScale:1.0, hair:'long', facialHair:false, gender:'f',
+    special:{ name:'ファラオのすな嵐', emoji:'🏺', desc:'砂ぼこりを巻き上げて、視界を奪いながら強打！' } },
+];
+const MAX_STAT = 10;
+
+/* =========================================================
+   秘密の最終ボス（アーケードモード5戦目だけに登場）
+   写真のような白×金のゴリラ。ワタルと同じく手足がぐんと伸びる。
+========================================================= */
+const BOSS_CHARACTER = {
+  id:'mystery_boss', name:'？？？', country:'？？？', flag:'❓', color:'#f0ead9', avatar:'🦍', skin:'#f5efe0',
+  tagline:'すべての挑戦者を退けてきた、正体不明の最終防衛者',
+  power:10, speed:10, jump:10, stamina:10,
+  scale:1.85, torsoWidthMult:1.55, headScale:1.05, hair:'short', facialHair:false, gender:'m',
+  irisColor:'#5ec8f0', hairAccent:'#c9a227',
+  special:{ name:'カオス・インパクト', emoji:'💀', desc:'すべてを飲み込む、正体不明の必殺の一撃。' },
+};
+
+/* =========================================================
+   効果音（Web Audio APIで合成。音声ファイルは使わない）
+========================================================= */
+let audioCtx = null;
+let soundOn = true;
+
+function getAudioCtx(){
+  if (!audioCtx){
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtx = new Ctx();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(freq, duration, {type='sine', volume=0.25, freqEnd=null, delay=0} = {}){
+  if (!soundOn) return;
+  const ac = getAudioCtx();
+  if (!ac) return;
+  const t0 = ac.currentTime + delay;
+  const osc = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  if (freqEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(20,freqEnd), t0+duration);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(volume, t0+0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+duration);
+  osc.connect(gain); gain.connect(ac.destination);
+  osc.start(t0); osc.stop(t0+duration+0.02);
+}
+
+function playNoiseBurst(duration, {volume=0.3, filterFreq=1200, filterType='lowpass', delay=0} = {}){
+  if (!soundOn) return;
+  const ac = getAudioCtx();
+  if (!ac) return;
+  const t0 = ac.currentTime + delay;
+  const bufferSize = Math.max(1, Math.floor(ac.sampleRate * duration));
+  const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i=0;i<bufferSize;i++){
+    data[i] = (Math.random()*2-1) * Math.pow(1 - i/bufferSize, 1.6);
+  }
+  const noise = ac.createBufferSource();
+  noise.buffer = buffer;
+  const filter = ac.createBiquadFilter();
+  filter.type = filterType;
+  filter.frequency.value = filterFreq;
+  const gain = ac.createGain();
+  gain.gain.setValueAtTime(volume, t0);
+  noise.connect(filter); filter.connect(gain); gain.connect(ac.destination);
+  noise.start(t0);
+}
+
+const sfx = {
+  punchHit(){ playNoiseBurst(0.09, {volume:0.35, filterFreq:1800}); playTone(150, 0.08, {type:'sine', volume:0.22, freqEnd:60}); },
+  kickHit(){ playNoiseBurst(0.15, {volume:0.4, filterFreq:900}); playTone(95, 0.16, {type:'sine', volume:0.3, freqEnd:45}); },
+  guardHit(){ playNoiseBurst(0.06, {volume:0.22, filterFreq:2600, filterType:'highpass'}); playTone(620, 0.09, {type:'square', volume:0.14, freqEnd:420}); },
+  whiff(){ playNoiseBurst(0.1, {volume:0.14, filterFreq:2200, filterType:'highpass'}); },
+  jump(){ playTone(320, 0.14, {type:'sine', volume:0.14, freqEnd:600}); },
+  specialCharge(){ playTone(220, 0.24, {type:'sawtooth', volume:0.12, freqEnd:880}); },
+  specialHit(){ playNoiseBurst(0.3, {volume:0.4, filterFreq:500}); playTone(70, 0.32, {type:'sine', volume:0.32, freqEnd:35}); },
+  roundhouseCharge(){ playTone(180, 0.2, {type:'sawtooth', volume:0.1, freqEnd:420}); },
+  roundhouseHit(){ playNoiseBurst(0.24, {volume:0.42, filterFreq:700}); playTone(80, 0.28, {type:'sawtooth', volume:0.3, freqEnd:38}); },
+  rocketLaunch(){ playTone(260, 0.22, {type:'sawtooth', volume:0.14, freqEnd:900}); playNoiseBurst(0.1, {volume:0.12, filterFreq:3000, filterType:'highpass'}); },
+  gorillaShotLaunch(){ playTone(160, 0.24, {type:'sawtooth', volume:0.18, freqEnd:55}); playNoiseBurst(0.16, {volume:0.22, filterFreq:600}); },
+  roundBell(){ playTone(880, 0.18, {type:'triangle', volume:0.22}); playTone(1320, 0.22, {type:'triangle', volume:0.18, delay:0.1}); },
+  ko(){ playTone(480, 0.6, {type:'sawtooth', volume:0.28, freqEnd:70}); },
+  victory(){ [523,659,784,1047].forEach((f,i)=>playTone(f,0.16,{type:'sine',volume:0.2,delay:i*0.13})); },
+  defeat(){ [400,340,280,220].forEach((f,i)=>playTone(f,0.22,{type:'sine',volume:0.18,delay:i*0.15})); },
+};
+
+document.getElementById('mute-btn').addEventListener('click', () => {
+  soundOn = !soundOn;
+  document.getElementById('mute-btn').textContent = soundOn ? '🔊' : '🔇';
+  if (soundOn) getAudioCtx();
+});
+
+/* =========================================================
+   バックミュージック（Web Audio APIでその場で演奏するループ曲）
+========================================================= */
+// ベースライン（Am → F → C → G の熱い進行）と、上で跳ねるリード、ドラムの3パート
+const MUSIC_BASS = [
+  110,0,110,0, 110,0,146.83,0, 87.31,0,87.31,0, 87.31,0,110,0,
+  130.81,0,130.81,0, 130.81,0,164.81,0, 98,0,98,0, 98,0,110,0
+];
+const MUSIC_LEAD = [
+  0,0,440,0, 0,523.25,0,0, 0,0,349.23,0, 0,0,392,0,
+  0,0,523.25,0, 0,587.33,0,0, 0,0,392,0, 0,0,440,0
+];
+const MUSIC_STEPS = MUSIC_BASS.length;
+
+let musicPlaying = false;
+let musicStep = 0;
+let musicNextStepTime = 0;
+let musicStepSec = 60/150/4;
+let musicTimerId = null;
+
+function scheduleMusicStep(step, time){
+  const bassFreq = MUSIC_BASS[step];
+  if (bassFreq) playTone(bassFreq, musicStepSec*3.4, {type:'sawtooth', volume:0.1, delay: time-getAudioCtx().currentTime});
+  const leadFreq = MUSIC_LEAD[step];
+  if (leadFreq) playTone(leadFreq, musicStepSec*1.7, {type:'square', volume:0.065, delay: time-getAudioCtx().currentTime});
+  if (step%8===0){
+    playNoiseBurst(0.12, {volume:0.22, filterFreq:180, delay: time-getAudioCtx().currentTime});
+    playTone(68, 0.14, {type:'sine', volume:0.16, freqEnd:32, delay: time-getAudioCtx().currentTime});
+  }
+  if (step%8===4){
+    playNoiseBurst(0.09, {volume:0.15, filterFreq:1800, delay: time-getAudioCtx().currentTime});
+  }
+  if (step%2===0){
+    playNoiseBurst(0.03, {volume:0.04, filterFreq:7500, filterType:'highpass', delay: time-getAudioCtx().currentTime});
+  }
+}
+
+function musicSchedulerTick(){
+  if (!musicPlaying) return;
+  const ac = getAudioCtx();
+  if (!ac){ musicTimerId = setTimeout(musicSchedulerTick, 100); return; }
+  while (musicNextStepTime < ac.currentTime + 0.15){
+    scheduleMusicStep(musicStep % MUSIC_STEPS, musicNextStepTime);
+    musicNextStepTime += musicStepSec;
+    musicStep++;
+  }
+  musicTimerId = setTimeout(musicSchedulerTick, 25);
+}
+
+let musicIsBossFlag = false;
+function startMusic(intense){
+  musicIsBossFlag = intense;
+  const ac = getAudioCtx();
+  if (!ac) return;
+  musicPlaying = true;
+  musicStep = 0;
+  musicStepSec = 60/(intense?178:148)/4;
+  musicNextStepTime = ac.currentTime + 0.1;
+  if (musicTimerId) clearTimeout(musicTimerId);
+  musicSchedulerTick();
+}
+function stopMusic(){
+  musicPlaying = false;
+  if (musicTimerId) clearTimeout(musicTimerId);
+}
+
+/* =========================================================
+   モード選択
+========================================================= */
+let gameMode = 'free'; // 'free' | 'arcade'
+let arcadeStage = 1;
+let arcadeFaced = [];
+
+document.getElementById('mode-free').addEventListener('click', () => {
+  gameMode = 'free';
+  document.getElementById('select-mode-badge').innerHTML = '';
+  document.getElementById('start-battle-btn').textContent = 'バトル開始！';
+  showView('select-view');
+});
+document.getElementById('mode-arcade').addEventListener('click', () => {
+  gameMode = 'arcade';
+  document.getElementById('select-mode-badge').innerHTML = '<span class="mode-badge">🏆 アーケードモード：5連戦に挑戦！</span>';
+  document.getElementById('start-battle-btn').textContent = 'アーケード開始！';
+  showView('select-view');
+});
+document.getElementById('back-to-mode-btn').addEventListener('click', () => {
+  showView('mode-view');
+});
+
+/* =========================================================
+   キャラクター選択画面
+========================================================= */
+let selectedId = null;
+const charGrid = document.getElementById('char-grid');
+
+function statBarHTML(label, value){
+  const pct = Math.round((value / MAX_STAT) * 100);
+  return `
+    <div class="stat-row">
+      <div class="stat-label">${label}</div>
+      <div class="stat-track"><div class="stat-fill" style="width:${pct}%"></div></div>
+      <div class="stat-num">${value}</div>
+    </div>`;
+}
+
+function renderCharGrid(){
+  charGrid.innerHTML = CHARACTERS.map(c => `
+    <div class="char-card" data-id="${c.id}" style="--card-color:${c.color}">
+      <div class="char-top">
+        <div class="char-avatar">${c.avatar}</div>
+        <div class="char-name-wrap">
+          <div class="char-name">${c.name}</div>
+          <div class="char-sub"><span class="char-flag">${c.flag}</span>${c.country}</div>
+        </div>
+      </div>
+      <div class="char-sub" style="margin-top:8px;">${c.tagline}</div>
+      <div class="stat-list">
+        ${statBarHTML('パワー', c.power)}
+        ${statBarHTML('速さ', c.speed)}
+        ${statBarHTML('跳躍力', c.jump)}
+        ${statBarHTML('体力', c.stamina)}
+      </div>
+      <div class="char-special"><b>必殺技：${c.special.name}</b><br>${c.special.desc}</div>
+      ${c.extraMove ? `<div class="char-special" style="margin-top:8px; border:1px solid rgba(255,201,60,0.45);"><b>専用コマンド（${c.extraMove.key}キー）：${c.extraMove.name}</b><br>${c.extraMove.desc}</div>` : ''}
+    </div>
+  `).join('');
+
+  charGrid.querySelectorAll('.char-card').forEach(card => {
+    card.addEventListener('click', () => {
+      selectedId = card.dataset.id;
+      charGrid.querySelectorAll('.char-card').forEach(el => el.classList.remove('selected'));
+      card.classList.add('selected');
+      const c = CHARACTERS.find(x => x.id === selectedId);
+      document.getElementById('picked-line').innerHTML = `<span>${c.name}</span> をえらんだよ！`;
+      document.getElementById('start-battle-btn').disabled = false;
+    });
+  });
+}
+renderCharGrid();
+
+document.getElementById('start-battle-btn').addEventListener('click', () => {
+  if (!selectedId) return;
+  getAudioCtx();
+  const pChar = CHARACTERS.find(c => c.id === selectedId);
+  if (gameMode === 'arcade'){
+    arcadeStage = 1;
+    arcadeFaced = [pChar.id];
+    const eChar = pickArcadeOpponent(1, pChar.id, arcadeFaced);
+    arcadeFaced.push(eChar.id);
+    beginMatch(pChar, eChar);
+  } else {
+    const opponents = CHARACTERS.filter(c => c.id !== selectedId);
+    const eChar = opponents[Math.floor(Math.random() * opponents.length)];
+    beginMatch(pChar, eChar);
+  }
+});
+
+function pickArcadeOpponent(stageNum, pCharId, faced){
+  if (stageNum >= 5) return BOSS_CHARACTER;
+  const pool = CHARACTERS.filter(c => c.id !== pCharId && !faced.includes(c.id));
+  // ステージが進むほど、より手ごわい（能力値の合計が高い）相手が選ばれやすくなる
+  const rated = pool.map(c => ({ c, r: c.power+c.speed+c.jump+c.stamina }))
+                     .sort((a,b) => a.r - b.r);
+  const t = (stageNum-1) / 3; // stage1→0, stage4→1
+  const centerIdx = Math.round(t * (rated.length-1));
+  const spread = Math.max(1, Math.round(rated.length * 0.35));
+  const lo = Math.max(0, centerIdx - spread);
+  const hi = Math.min(rated.length-1, centerIdx + spread);
+  const choices = rated.slice(lo, hi+1);
+  return choices[Math.floor(Math.random() * choices.length)].c;
+}
+
+function startArcadeStage(){
+  const eChar = pickArcadeOpponent(arcadeStage, player.char.id, arcadeFaced);
+  arcadeFaced.push(eChar.id);
+  beginMatch(player.char, eChar);
+}
+
+document.getElementById('rematch-btn').addEventListener('click', () => {
+  getAudioCtx();
+  const pChar = player.char;
+  const opponents = CHARACTERS.filter(c => c.id !== pChar.id);
+  const eChar = opponents[Math.floor(Math.random() * opponents.length)];
+  beginMatch(pChar, eChar);
+});
+
+document.getElementById('reselect-btn').addEventListener('click', () => {
+  stopEngine();
+  showView('select-view');
+});
+
+document.getElementById('arcade-retry-btn').addEventListener('click', () => {
+  getAudioCtx();
+  const pChar = player.char;
+  arcadeStage = 1;
+  arcadeFaced = [pChar.id];
+  const eChar = pickArcadeOpponent(1, pChar.id, arcadeFaced);
+  arcadeFaced.push(eChar.id);
+  beginMatch(pChar, eChar);
+});
+document.getElementById('arcade-back-btn').addEventListener('click', () => {
+  stopEngine();
+  showView('mode-view');
+});
+
+function showView(id){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* =========================================================
+   リアルタイム バトルエンジン
+========================================================= */
+const STAGE_W = 800, STAGE_H = 380, GROUND_Y = 300;
+const BODY_W = 74, BODY_H = 108;
+const TORSO_W = 32, TORSO_H = 46, HEAD_R = 24, ARM_W = 11, ARM_LEN = 38, LEG_W = 15, LEG_LEN = 44;
+const MIN_GAP = 90;
+
+const ACTIONS = {
+  punch:      { startup:75,  active:100, recovery:150, dmgBase:9,  dmgMul:0.7,  reach:66  },
+  kick:       { startup:120, active:160, recovery:190, dmgBase:5,  dmgMul:0.35, reach:120 },
+  special:    { startup:260, active:280, recovery:340, dmgBase:16, dmgMul:0.9,  reach:99999 },
+  roundhouse: { startup:200, active:140, recovery:260, dmgBase:24, dmgMul:1.0,  reach:115, hitChance:0.45 },
+  rocket:     { startup:150, active:220, recovery:220, dmgBase:13, dmgMul:0.55, reach:99999 },
+  gorillaShot:{ startup:220, active:240, recovery:300, dmgBase:11, dmgMul:0.5,  reach:99999 },
+  crouchkick: { startup:95,  active:130, recovery:170, dmgBase:6,  dmgMul:0.4,  reach:105 },
+};
+
+const STAGES = ['neon','desert','dojo'];
+let currentStage = 'neon';
+
+let player, enemy, scoreP, scoreE, currentRound;
+let rawKeysDown = new Set();
+let floatTexts = [];
+let projectile = null;
+let roundActive = false;
+let engineRunning = false;
+let lastTs = 0;
+let rafId = null;
+
+const ctx = document.getElementById('stage').getContext('2d');
+
+function makeFighter(charData, x, isPlayer, boost){
+  boost = boost || {};
+  const maxHp = Math.round((70 + charData.stamina * 5) * (boost.hpMult || 1));
+  return {
+    char: charData, isPlayer,
+    x, height:0, vy:0, jumpGrace:0, landGrace:0,
+    facing: isPlayer ? 1 : -1,
+    hp: maxHp, maxHp,
+    gauge:0,
+    powerBonus: boost.power || 0,
+    stretchReach: !!boost.stretchReach,
+    reachMult: boost.stretchReach ? (3 + Math.random()*2) : 1, // 3〜5倍
+    rangedAI: !!boost.rangedAI,
+    speedMulBonus: boost.speedMul || 1,
+    rocketCharges: charData.id==='wataru' ? 3 : 0,
+    state:'idle', elapsed:0, attackHasHit:false, _spawned:false,
+    aiTimer: 0, aiMove:0,
+  };
+}
+
+function arcadeBoostFor(stageNum, isBoss){
+  if (isBoss){
+    // 最終ボス（ゴリラ）は固定でとても手ごわい
+    return { hpMult: 2.1, power: 8 };
+  }
+  if (!stageNum) return {};
+  // ステージが進むほど、相手のHPと攻撃力がじわじわ底上げされる
+  const t = Math.max(0, stageNum-1); // stage1→0, stage4→3
+  const base = { hpMult: 1 + t*0.12, power: t*1.1 };
+  if (stageNum === 4){
+    // ボス前の第4戦：手足が3〜5倍伸び、間合いを取って戦う遠距離型
+    base.stretchReach = true;
+    base.rangedAI = true;
+  }
+  return base;
+}
+
+function beginMatch(pChar, eChar){
+  const isArcade = gameMode === 'arcade';
+  const isBoss = eChar.id === 'mystery_boss';
+  player = makeFighter(pChar, 220, true);
+  enemy  = makeFighter(eChar, 580, false, isArcade ? arcadeBoostFor(arcadeStage, isBoss) : {});
+  scoreP = 0; scoreE = 0; currentRound = 1;
+  currentStage = STAGES[Math.floor(Math.random()*STAGES.length)];
+  isPaused = false;
+  document.getElementById('pause-overlay').classList.add('hidden');
+  showView('battle-view');
+  updateHUDNames();
+  startEngine();
+  startMusic(eChar.id === 'mystery_boss');
+  startRound();
+}
+
+/* ---------- 一時停止 ---------- */
+let isPaused = false;
+function pauseGame(){
+  if (!player || isPaused || !engineRunning) return;
+  isPaused = true;
+  document.getElementById('pause-overlay').classList.remove('hidden');
+  stopMusic();
+}
+function resumeGame(){
+  if (!isPaused) return;
+  isPaused = false;
+  document.getElementById('pause-overlay').classList.add('hidden');
+  lastTs = 0;
+  if (soundOn) startMusic(musicIsBossFlag);
+}
+document.getElementById('pause-btn').addEventListener('click', () => {
+  getAudioCtx();
+  if (isPaused) resumeGame(); else pauseGame();
+});
+document.getElementById('resume-btn').addEventListener('click', resumeGame);
+document.getElementById('quit-to-mode-btn').addEventListener('click', () => {
+  isPaused = false;
+  document.getElementById('pause-overlay').classList.add('hidden');
+  stopEngine();
+  showView('mode-view');
+});
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Escape' && player && document.getElementById('battle-view').classList.contains('active')){
+    e.preventDefault();
+    if (isPaused) resumeGame(); else pauseGame();
+  }
+});
+
+function updateHUDNames(){
+  document.getElementById('p1-name').textContent = player.char.name;
+  document.getElementById('p1-sub').textContent = `${player.char.flag} ${player.char.country}`;
+  document.getElementById('p2-name').textContent = enemy.char.name;
+  document.getElementById('p2-sub').textContent = `${enemy.char.flag} ${enemy.char.country}`;
+  const showExtra = player.char.id==='takeru' || player.char.id==='wataru';
+  document.getElementById('chip-roundhouse').classList.toggle('hidden', !showExtra);
+  document.getElementById('tc-roundhouse').classList.toggle('hidden', !showExtra);
+  updateExtraMoveLabel();
+}
+
+function updateExtraMoveLabel(){
+  const chip = document.getElementById('chip-roundhouse');
+  const btn = document.getElementById('tc-roundhouse');
+  if (player.char.id==='takeru'){
+    chip.innerHTML = '<kbd>V</kbd>かいてんげり';
+    btn.innerHTML = 'V<small>かいてん蹴り</small>';
+    chip.style.opacity = '1';
+    btn.style.opacity = '1';
+  } else if (player.char.id==='wataru'){
+    const left = Math.max(0, player.rocketCharges);
+    chip.innerHTML = `<kbd>V</kbd>ロケットパンチ（残り${left}）`;
+    btn.innerHTML = `V<small>ロケット(${left})</small>`;
+    chip.style.opacity = left>0 ? '1' : '0.4';
+    btn.style.opacity = left>0 ? '1' : '0.4';
+  }
+}
+
+function renderRoundTracker(){
+  const tracker = document.getElementById('round-tracker');
+  let dots = '';
+  for (let i = 0; i < 3; i++){
+    let cls = 'round-dot';
+    if (i < scoreP) cls += ' win-p1';
+    else if (i < scoreE) cls += ' win-p2';
+    dots += `<div class="${cls}"></div>`;
+  }
+  tracker.innerHTML = dots;
+  document.getElementById('round-label').textContent = gameMode==='arcade'
+    ? `アーケード ステージ ${arcadeStage}/5 ・ 第${currentRound}回戦`
+    : `第${currentRound}回戦`;
+}
+
+function renderGauge(elId, gauge){
+  let html = '';
+  for (let i = 0; i < 3; i++) html += `<span class="gauge-star ${i < gauge ? 'filled' : ''}">★</span>`;
+  document.getElementById(elId).innerHTML = html;
+}
+
+function renderHUD(){
+  document.getElementById('p1-hp-num').textContent = `${Math.max(0,Math.round(player.hp))} / ${player.maxHp}`;
+  const r1 = Math.max(0,player.hp)/player.maxHp;
+  const f1 = document.getElementById('p1-hp-fill');
+  f1.style.width = `${r1*100}%`;
+  f1.style.background = r1>0.5?'var(--hp-green)':(r1>0.2?'var(--hp-yellow)':'var(--hp-red)');
+  renderGauge('p1-gauge', player.gauge);
+
+  document.getElementById('p2-hp-num').textContent = `${Math.max(0,Math.round(enemy.hp))} / ${enemy.maxHp}`;
+  const r2 = Math.max(0,enemy.hp)/enemy.maxHp;
+  const f2 = document.getElementById('p2-hp-fill');
+  f2.style.width = `${r2*100}%`;
+  f2.style.background = r2>0.5?'var(--hp-green)':(r2>0.2?'var(--hp-yellow)':'var(--hp-red)');
+  renderGauge('p2-gauge', enemy.gauge);
+
+  document.getElementById('chip-special').classList.toggle('ready', player.gauge >= 3);
+  const tcSpecial = document.getElementById('tc-special');
+  if (tcSpecial) tcSpecial.classList.toggle('ready', player.gauge >= 3);
+  if (player.char.id==='wataru') updateExtraMoveLabel();
+}
+
+function showCenterText(text){
+  document.getElementById('center-overlay').innerHTML = `<div class="big-text">${text}</div>`;
+}
+function clearCenterText(){ document.getElementById('center-overlay').innerHTML=''; }
+
+/* ---------- ラウンド管理 ---------- */
+function startRound(){
+  player.hp = player.maxHp; player.gauge = 0; player.x = 220; player.height=0; player.vy=0; player.jumpGrace=0; player.landGrace=0;
+  player.state='idle'; player.elapsed=0; player._spawned=false;
+  enemy.hp = enemy.maxHp; enemy.gauge = 0; enemy.x = 580; enemy.height=0; enemy.vy=0; enemy.jumpGrace=0; enemy.landGrace=0;
+  enemy.state='idle'; enemy.elapsed=0; enemy.aiTimer=0; enemy._spawned=false;
+  floatTexts = []; projectile = null;
+  roundActive = false;
+  renderRoundTracker();
+  renderHUD();
+  render();
+  showCenterText(`第${currentRound}回戦`);
+  sfx.roundBell();
+  setTimeout(() => {
+    showCenterText('ファイト！');
+    sfx.roundBell();
+    setTimeout(() => { clearCenterText(); roundActive = true; }, 650);
+  }, 900);
+}
+
+function endRound(loserIsPlayer){
+  roundActive = false;
+  if (loserIsPlayer) scoreE++; else scoreP++;
+  renderRoundTracker();
+  showCenterText('K.O.!');
+  sfx.ko();
+  setTimeout(() => {
+    clearCenterText();
+    if (scoreP >= 2){
+      if (gameMode==='arcade') proceedAfterMatchWin(); else showResult();
+    } else if (scoreE >= 2){
+      if (gameMode==='arcade') proceedAfterMatchLose(); else showResult();
+    } else {
+      currentRound++;
+      startRound();
+    }
+  }, 1500);
+}
+
+function proceedAfterMatchWin(){
+  if (arcadeStage >= 5){
+    showArcadeClear();
+    return;
+  }
+  showCenterText(`ステージ${arcadeStage} クリア！`);
+  sfx.victory();
+  setTimeout(() => {
+    clearCenterText();
+    arcadeStage++;
+    startArcadeStage();
+  }, 1800);
+}
+
+function proceedAfterMatchLose(){
+  showArcadeGameOver();
+}
+
+function showResult(){
+  stopEngine();
+  showView('result-view');
+  document.getElementById('free-actions').classList.remove('hidden');
+  document.getElementById('arcade-actions').classList.add('hidden');
+  const badge = document.querySelector('.result-badge');
+  const title = document.getElementById('result-title');
+  const sub = document.getElementById('result-sub');
+  if (scoreP > scoreE){
+    badge.textContent = '🏆';
+    title.textContent = `${player.char.name} の勝利！`;
+    sub.textContent = `${scoreP} - ${scoreE} で ${enemy.char.name} を下した！ おめでとう！`;
+    sfx.victory();
+  } else {
+    badge.textContent = '💪';
+    title.textContent = `${enemy.char.name} の勝利...`;
+    sub.textContent = `${scoreE} - ${scoreP}。次はキミの番だ！もう一度挑戦しよう！`;
+    sfx.defeat();
+  }
+}
+
+function showArcadeClear(){
+  stopEngine();
+  showView('result-view');
+  document.getElementById('free-actions').classList.add('hidden');
+  document.getElementById('arcade-actions').classList.remove('hidden');
+  document.querySelector('.result-badge').textContent = '👑';
+  document.getElementById('result-title').textContent = `${player.char.name} アーケードクリア！`;
+  document.getElementById('result-sub').textContent = `秘密の最終防衛者をふくむ5人に連続で勝利した、真のチャンピオンだ！`;
+  sfx.victory();
+}
+
+function showArcadeGameOver(){
+  stopEngine();
+  showView('result-view');
+  document.getElementById('free-actions').classList.add('hidden');
+  document.getElementById('arcade-actions').classList.remove('hidden');
+  document.querySelector('.result-badge').textContent = '💀';
+  document.getElementById('result-title').textContent = `ゲームオーバー`;
+  document.getElementById('result-sub').textContent = `ステージ${arcadeStage}/5 で敗れた…もう一度挑戦しよう！`;
+  sfx.defeat();
+}
+
+/* ---------- 入力 ---------- */
+const LEFT_CODES = ['ArrowLeft','KeyA'];
+const RIGHT_CODES = ['ArrowRight','KeyD'];
+const UP_CODES = ['ArrowUp','KeyW'];
+const DOWN_CODES = ['ArrowDown','KeyS'];
+const PUNCH_CODES = ['KeyZ'];
+const KICK_CODES = ['KeyX'];
+const SPECIAL_CODES = ['KeyC'];
+const ROUNDHOUSE_CODES = ['KeyV'];
+const CROUCH_CODES = ['ShiftLeft','ShiftRight'];
+const ALL_GAME_CODES = [...LEFT_CODES,...RIGHT_CODES,...UP_CODES,...DOWN_CODES,...PUNCH_CODES,...KICK_CODES,...SPECIAL_CODES,...ROUNDHOUSE_CODES,...CROUCH_CODES];
+
+function setChipActive(codes, active){
+  document.querySelectorAll('.key-chip').forEach(chip => {
+    const chipCodes = chip.dataset.keys.split(',');
+    if (chipCodes.some(c => codes.includes(c))) chip.classList.toggle('active', active);
+  });
+}
+
+window.addEventListener('keydown', (e) => {
+  if (!ALL_GAME_CODES.includes(e.code)) return;
+  e.preventDefault();
+  const isNew = !rawKeysDown.has(e.code);
+  rawKeysDown.add(e.code);
+  if (isNew) setChipActive([e.code], true);
+  if (!roundActive || !engineRunning || !player || isPaused) return;
+  if (isNew){
+    if (UP_CODES.includes(e.code)) tryJump(player);
+    if (PUNCH_CODES.includes(e.code)) triggerAttack(player,'punch');
+    if (KICK_CODES.includes(e.code)) triggerAttack(player, player.state==='crouch' ? 'crouchkick' : 'kick');
+    if (SPECIAL_CODES.includes(e.code) && player.gauge>=3) triggerAttack(player,'special');
+    if (ROUNDHOUSE_CODES.includes(e.code)){
+      if (player.char.id==='takeru') triggerAttack(player,'roundhouse');
+      else if (player.char.id==='wataru' && player.rocketCharges>0) triggerAttack(player,'rocket');
+    }
+  }
+});
+window.addEventListener('keyup', (e) => {
+  if (!ALL_GAME_CODES.includes(e.code)) return;
+  rawKeysDown.delete(e.code);
+  setChipActive([e.code], false);
+});
+
+/* ---------- スマートフォン用タッチ操作 ---------- */
+function bindHold(el, code){
+  const press = (e) => { e.preventDefault(); getAudioCtx(); rawKeysDown.add(code); };
+  const release = (e) => { e.preventDefault(); rawKeysDown.delete(code); };
+  el.addEventListener('pointerdown', press);
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointerleave', release);
+  el.addEventListener('pointercancel', release);
+}
+function bindTap(el, fn){
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    getAudioCtx();
+    if (!roundActive || !engineRunning || !player || isPaused) return;
+    fn();
+  });
+}
+bindHold(document.getElementById('tc-left'), 'ArrowLeft');
+bindHold(document.getElementById('tc-right'), 'ArrowRight');
+bindHold(document.getElementById('tc-guard'), 'ArrowDown');
+bindHold(document.getElementById('tc-crouch'), 'ShiftLeft');
+bindTap(document.getElementById('tc-up'), () => tryJump(player));
+bindTap(document.getElementById('tc-punch'), () => triggerAttack(player,'punch'));
+bindTap(document.getElementById('tc-kick'), () => triggerAttack(player, player.state==='crouch' ? 'crouchkick' : 'kick'));
+bindTap(document.getElementById('tc-special'), () => { if (player.gauge>=3) triggerAttack(player,'special'); });
+bindTap(document.getElementById('tc-roundhouse'), () => {
+  if (player.char.id==='takeru') triggerAttack(player,'roundhouse');
+  else if (player.char.id==='wataru' && player.rocketCharges>0) triggerAttack(player,'rocket');
+});
+
+/* ---------- ファイター行動 ---------- */
+function tryJump(f){
+  if (f.state!=='idle' || f.height>0) return;
+  f.vy = 330 + f.char.jump * 32;
+  f.jumpGrace = 130; // ジャンプ直後の短い無敵時間（ジャンプ即着弾を防ぐ）
+  sfx.jump();
+}
+function triggerAttack(f, type){
+  const fromIdle = f.state==='idle';
+  const fromCrouch = f.state==='crouch' && type==='crouchkick';
+  if ((!fromIdle && !fromCrouch) || f.height>0) return;
+  if (type==='roundhouse' && f.char.id!=='takeru') return;
+  if (type==='rocket'){
+    if (f.char.id!=='wataru' || f.rocketCharges<=0) return;
+    f.rocketCharges--;
+  }
+  f.state = type; f.elapsed = 0; f.attackHasHit = false;
+  if (type==='special') sfx.specialCharge();
+  else if (type==='roundhouse') sfx.roundhouseCharge();
+  else if (type==='rocket') sfx.rocketLaunch();
+}
+function setGuard(f, on){
+  if (on && f.state==='idle' && f.height===0){ f.state='guard'; }
+  else if (!on && f.state==='guard'){ f.state='idle'; }
+}
+function setCrouch(f, on){
+  if (on && f.state==='idle' && f.height===0){ f.state='crouch'; }
+  else if (!on && f.state==='crouch'){ f.state='idle'; }
+}
+
+function sizeFactor(charData){
+  // 体の大きさ(scale)を、当たり判定にはゆるやかに反映（極端になりすぎないよう抑える）
+  const sc = charData.scale || 1;
+  return Math.max(0.6, Math.min(1.85, 0.5 + sc*0.5));
+}
+
+function attackReach(attacker, type, baseReach){
+  // ゴリラ、およびアーケード第4戦の相手は、腕・足がぐーんと伸びるので間合いがとても長い
+  if (attacker.char.id === 'mystery_boss'){
+    if (type==='punch') return 300;
+    if (type==='kick') return 320;
+  }
+  if (attacker.stretchReach && (type==='punch' || type==='kick')){
+    return baseReach * attacker.reachMult;
+  }
+  return baseReach * sizeFactor(attacker.char);
+}
+
+function resolveHit(attacker, defender, type){
+  const cfg = ACTIONS[type];
+  const defenderDodging = defender.height>0 || defender.jumpGrace>0 || defender.landGrace>0
+    || (type==='punch' && defender.state==='crouch'); // しゃがみ中はパンチが当たらない
+  let inRange;
+  if (type==='special' || type==='rocket' || type==='gorillaShot'){
+    inRange = !defenderDodging; // 飛び道具でも、ジャンプ中は避けられる
+  } else {
+    const gap = Math.abs(attacker.x - defender.x) - BODY_W*sizeFactor(defender.char);
+    inRange = gap <= attackReach(attacker, type, cfg.reach) && !defenderDodging;
+  }
+  if (inRange && cfg.hitChance !== undefined && Math.random() > cfg.hitChance){
+    inRange = false;
+  }
+  if (!inRange){
+    floatTexts.push({x:attacker.x, y:GROUND_Y-BODY_H-30, text:'すかした！', life:700, color:'#b6a9e0'});
+    sfx.whiff();
+    return;
+  }
+  const isBossAttacker = attacker.char.id === 'mystery_boss';
+  const dmgScale = isBossAttacker ? 2.25 : 1;
+  const atkPower = attacker.char.power + (attacker.powerBonus||0);
+  if (defender.state==='guard'){
+    const dmg = Math.max(1, Math.round((cfg.dmgBase + atkPower*cfg.dmgMul) * 0.28 * dmgScale));
+    defender.hp = Math.max(0, defender.hp - dmg);
+    defender.gauge = Math.min(3, defender.gauge+1);
+    defender.x += (attacker.x < defender.x ? 1 : -1) * 14;
+    floatTexts.push({x:defender.x, y:GROUND_Y-BODY_H-30, text:`ガード -${dmg}`, life:700, color:'#3ddc84'});
+    sfx.guardHit();
+  } else {
+    const dmg = Math.round((cfg.dmgBase + atkPower*cfg.dmgMul + (type==='special'?6:3)) * dmgScale);
+    defender.hp = Math.max(0, defender.hp - dmg);
+    defender.state = 'hit'; defender.elapsed = 0;
+    defender.x += (attacker.x < defender.x ? 1 : -1) * 26;
+    if (type!=='special') attacker.gauge = Math.min(3, attacker.gauge+1);
+    floatTexts.push({x:defender.x, y:GROUND_Y-BODY_H-30, text:`-${dmg}`, life:700, color:'#ff8a8a'});
+    if (type==='punch') sfx.punchHit();
+    else if (type==='kick' || type==='crouchkick') sfx.kickHit();
+    else if (type==='roundhouse') sfx.roundhouseHit();
+    else sfx.specialHit();
+    if (defender.hp<=0){ defender.state='ko'; defender.elapsed=0; }
+  }
+  if (type==='special') attacker.gauge = 0;
+}
+
+/* ---------- AI（コンピューター操作） ---------- */
+const lerp = (a,b,t) => a + (b-a)*t;
+
+function updateAI(dt){
+  enemy.aiTimer -= dt*1000;
+  if (enemy.aiTimer <= 0){
+    const isBoss = enemy.char.id === 'mystery_boss';
+    // アーケードはステージが進むほど（1→4）じわじわ手ごわく、5戦目のボスが最も手ごわい
+    const diff = isBoss ? 1 : (gameMode==='arcade' ? Math.min(0.85, Math.max(0,(arcadeStage-1))*0.28) : 0);
+    enemy.aiTimer = isBoss ? (60 + Math.random()*90) : (lerp(260,110,diff) + Math.random()*lerp(420,180,diff));
+    const dist = Math.abs(player.x - enemy.x) - BODY_W*(sizeFactor(player.char)+sizeFactor(enemy.char))/2;
+    const isRanged = enemy.rangedAI;
+    const attackRange = isBoss ? 210 : (isRanged ? Math.round(200*enemy.reachMult*0.55) : 110);
+    const tooClose = isRanged ? attackRange*0.6 : 0;
+    if (enemy.state==='guard') setGuard(enemy,false);
+    if (enemy.state==='crouch') setCrouch(enemy,false);
+    if (enemy.state==='idle' && enemy.height===0){
+      if (isRanged && dist < tooClose){
+        // 接近戦を嫌って、離れようとする（キャラを尊重した間合い維持）
+        enemy.aiMove = player.x > enemy.x ? -1 : 1;
+      } else if (dist > attackRange){
+        enemy.aiMove = player.x > enemy.x ? 1 : -1;
+        if (Math.random() < lerp(0.12,0.18,diff)) tryJump(enemy);
+      } else {
+        enemy.aiMove = 0;
+        const roll = Math.random();
+        const canSpecial = enemy.gauge>=3;
+        const isTakeru = enemy.char.id==='takeru';
+        const isWataru = enemy.char.id==='wataru';
+        const specialThresh = lerp(0.22,0.35,diff);
+        if (canSpecial && roll < specialThresh) triggerAttack(enemy,'special');
+        else if (isBoss && roll < specialThresh+0.15) triggerAttack(enemy,'gorillaShot');
+        else if (isTakeru && roll < specialThresh+0.13) triggerAttack(enemy,'roundhouse');
+        else if (isWataru && enemy.rocketCharges>0 && roll < specialThresh+0.13) triggerAttack(enemy,'rocket');
+        else if (roll < lerp(0.55,0.68,diff)) triggerAttack(enemy,'punch');
+        else if (roll < (isBoss?0.97:lerp(0.78,0.90,diff))-(isRanged?0.1:0)) triggerAttack(enemy,'kick');
+        else if (isRanged && roll < 0.95) setCrouch(enemy,true);
+        else setGuard(enemy,true);
+      }
+    } else {
+      enemy.aiMove = 0;
+    }
+  }
+}
+
+/* ---------- 物理・状態更新 ---------- */
+const GRAVITY = 900;
+function updateFighter(f, opp, dt, isPlayer){
+  if (f.jumpGrace>0) f.jumpGrace = Math.max(0, f.jumpGrace - dt*1000);
+  if (f.landGrace>0) f.landGrace = Math.max(0, f.landGrace - dt*1000);
+  if (f.state==='ko'){ f.elapsed += dt*1000; return; }
+
+  f.facing = opp.x >= f.x ? 1 : -1;
+
+  let vx = 0;
+  if (isPlayer){
+    const down = DOWN_CODES.some(c=>rawKeysDown.has(c));
+    const crouchHeld = CROUCH_CODES.some(c=>rawKeysDown.has(c));
+    setGuard(f, down);
+    if (!down) setCrouch(f, crouchHeld); else setCrouch(f, false);
+  }
+  if (f.state==='idle'){
+    if (isPlayer){
+      const left = LEFT_CODES.some(c=>rawKeysDown.has(c));
+      const right = RIGHT_CODES.some(c=>rawKeysDown.has(c));
+      if (left && !right) vx = -1;
+      else if (right && !left) vx = 1;
+    } else {
+      vx = f.aiMove;
+    }
+  }
+  const speedMul = f.char.id==='mystery_boss' ? 2.0 : 1;
+  const speedPx = (130 + f.char.speed * 20) * speedMul;
+  f.x += vx * speedPx * dt;
+  f.x = Math.max(50, Math.min(STAGE_W-50, f.x));
+
+  if (f.height>0 || f.vy>0){
+    f.height += f.vy*dt;
+    f.vy -= GRAVITY*dt;
+    if (f.height<=0){ f.height=0; f.vy=0; f.landGrace=100; } // 着地直後の短い猶予（着地即被弾を防ぐ）
+  }
+
+  if (['punch','kick','special','roundhouse','rocket','gorillaShot','crouchkick'].includes(f.state)){
+    const cfg = ACTIONS[f.state];
+    f.elapsed += dt*1000;
+    const total = cfg.startup+cfg.active+cfg.recovery;
+    if (f.elapsed>=cfg.startup && f.elapsed<cfg.startup+cfg.active && !f.attackHasHit){
+      resolveHit(f, opp, f.state);
+      f.attackHasHit = true;
+    }
+    if (f.elapsed>=total){ f.state='idle'; f.elapsed=0; }
+  } else if (f.state==='hit'){
+    f.elapsed += dt*1000;
+    if (f.elapsed>=320){ f.state='idle'; f.elapsed=0; }
+  }
+}
+
+function maybeSpawnProjectile(f, opp){
+  if (f.state==='special'){
+    const cfg = ACTIONS.special;
+    if (f.elapsed>=cfg.startup && !f._spawned){
+      projectile = { emoji:f.char.special.emoji, x:f.x+f.facing*40, y:GROUND_Y-BODY_H-20, targetX:opp.x, startX:f.x+f.facing*40, t:0, duration:cfg.active };
+      f._spawned = true;
+    }
+  } else if (f.state==='rocket'){
+    const cfg = ACTIONS.rocket;
+    if (f.elapsed>=cfg.startup && !f._spawned){
+      projectile = { emoji:'🚀', x:f.x+f.facing*40, y:GROUND_Y-BODY_H-20, targetX:opp.x, startX:f.x+f.facing*40, t:0, duration:cfg.active };
+      f._spawned = true;
+    }
+  } else if (f.state==='gorillaShot'){
+    const cfg = ACTIONS.gorillaShot;
+    if (f.elapsed>=cfg.startup && !f._spawned){
+      projectile = { emoji:'🦍', x:f.x+f.facing*44, y:GROUND_Y-BODY_H-10, targetX:opp.x, startX:f.x+f.facing*44, t:0, duration:cfg.active };
+      f._spawned = true;
+      sfx.gorillaShotLaunch();
+    }
+  } else {
+    f._spawned = false;
+  }
+}
+
+function resolveBodyCollision(preSide){
+  // ジャンプ中（どちらかが宙に浮いている）はすり抜け可能＝自然に飛び越えられる
+  if (player.height>0 || enemy.height>0) return;
+  const minGap = MIN_GAP * (sizeFactor(player.char) + sizeFactor(enemy.char)) / 2;
+  const gap = player.x - enemy.x;
+  const absGap = Math.abs(gap);
+  if (absGap < minGap){
+    // 直前フレームの左右関係(preSide)を保ったまま押し合う＝瞬間的な反転（バグのような揺れ）を防ぐ
+    const mid = (player.x + enemy.x) / 2;
+    player.x = mid + preSide * minGap/2;
+    enemy.x = mid - preSide * minGap/2;
+    player.x = Math.max(50, Math.min(STAGE_W-50, player.x));
+    enemy.x = Math.max(50, Math.min(STAGE_W-50, enemy.x));
+  }
+}
+
+function updateEngine(dt){
+  if (!roundActive) return;
+  updateAI(dt);
+  const preSide = Math.sign(player.x - enemy.x) || 1;
+  updateFighter(player, enemy, dt, true);
+  updateFighter(enemy, player, dt, false);
+  resolveBodyCollision(preSide);
+  maybeSpawnProjectile(player, enemy);
+  maybeSpawnProjectile(enemy, player);
+
+  if (projectile){
+    projectile.t += dt / (projectile.duration/1000);
+    projectile.x = projectile.startX + (projectile.targetX - projectile.startX) * Math.min(1,projectile.t);
+    if (projectile.t>=1) projectile=null;
+  }
+
+  if (player.state==='ko' && player.elapsed>420){ endRound(true); }
+  else if (enemy.state==='ko' && enemy.elapsed>420){ endRound(false); }
+
+  floatTexts.forEach(t => t.life -= dt*1000);
+  floatTexts = floatTexts.filter(t => t.life>0);
+
+  renderHUD();
+}
+
+/* ---------- 描画 ---------- */
+function roundRect(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y);
+  c.arcTo(x+w,y,x+w,y+h,r);
+  c.arcTo(x+w,y+h,x,y+h,r);
+  c.arcTo(x,y+h,x,y,r);
+  c.arcTo(x,y,x+w,y,r);
+  c.closePath();
+}
+
+function shadeColor(hex, percent){
+  const num = parseInt(hex.replace('#',''),16);
+  let r = (num>>16) + percent, g = ((num>>8)&0x00FF) + percent, b = (num&0x0000FF) + percent;
+  r = Math.min(255,Math.max(0,r)); g = Math.min(255,Math.max(0,g)); b = Math.min(255,Math.max(0,b));
+  return `rgb(${r},${g},${b})`;
+}
+
+function drawRotLimb(cx, cy, angle, len, w, color, cap){
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+  roundRect(ctx, 0, -w/2, len, w, w/2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  if (cap === 'foot'){
+    const shoeColor = shadeColor(color, -55);
+    roundRect(ctx, len-6, -w*0.62, w*1.9, w*1.24, w*0.55);
+    ctx.fillStyle = shoeColor;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  } else if (cap === 'hand'){
+    const handColor = shadeColor(color, 22);
+    ctx.beginPath();
+    ctx.fillStyle = handColor;
+    ctx.arc(len+1, 0, w*0.76, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.arc(len, 0, w/2+1.5, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawCapHair(cx,cy,r,hairColor,tall){
+  ctx.fillStyle = hairColor;
+  const top = tall ? 1.18 : 1.0;
+  ctx.beginPath();
+  ctx.moveTo(cx-r*1.0, cy-r*0.03);
+  ctx.quadraticCurveTo(cx-r*1.04, cy-r*top, cx, cy-r*(top-0.06));
+  ctx.quadraticCurveTo(cx+r*1.04, cy-r*top, cx+r*1.0, cy-r*0.03);
+  ctx.quadraticCurveTo(cx+r*0.66, cy-r*0.52, cx, cy-r*0.6);
+  ctx.quadraticCurveTo(cx-r*0.66, cy-r*0.52, cx-r*1.0, cy-r*0.03);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawHair(cx, cy, r, hairColor, style){
+  ctx.save();
+  ctx.fillStyle = hairColor;
+  switch(style){
+    case 'bald':
+      ctx.beginPath();
+      ctx.arc(cx, cy+r*0.05, r*0.98, Math.PI*1.12, Math.PI*1.88);
+      ctx.lineTo(cx+r*0.62, cy-r*0.72);
+      ctx.lineTo(cx-r*0.62, cy-r*0.72);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.ellipse(cx-r*0.18, cy-r*0.88, r*0.26, r*0.13, -0.3, 0, Math.PI*2);
+      ctx.fill();
+      break;
+    case 'mohawk':
+      drawCapHair(cx,cy,r,shadeColor(hairColor,-15),false);
+      ctx.fillStyle = hairColor;
+      ctx.beginPath();
+      ctx.moveTo(cx-r*0.15, cy-r*0.55);
+      ctx.lineTo(cx-r*0.1, cy-r*1.6);
+      ctx.lineTo(cx+r*0.1, cy-r*1.6);
+      ctx.lineTo(cx+r*0.15, cy-r*0.55);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 'ponytail':
+      drawCapHair(cx,cy,r,hairColor,false);
+      ctx.beginPath();
+      ctx.moveTo(cx-r*0.82, cy-r*0.5);
+      ctx.quadraticCurveTo(cx-r*1.55, cy-r*0.1, cx-r*1.2, cy+r*0.7);
+      ctx.quadraticCurveTo(cx-r*0.95, cy+r*0.3, cx-r*0.72, cy-r*0.32);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 'long':
+      drawCapHair(cx,cy,r,hairColor,false);
+      [-1,1].forEach(s => {
+        ctx.beginPath();
+        ctx.moveTo(cx+s*r*0.78, cy-r*0.48);
+        ctx.quadraticCurveTo(cx+s*r*1.28, cy+r*0.35, cx+s*r*0.86, cy+r*1.2);
+        ctx.quadraticCurveTo(cx+s*r*0.64, cy+r*0.5, cx+s*r*0.58, cy-r*0.28);
+        ctx.closePath();
+        ctx.fill();
+      });
+      break;
+    case 'short':
+      drawCapHair(cx,cy,r,hairColor,false);
+      break;
+    case 'spiky':
+    default:
+      drawCapHair(cx,cy,r,hairColor,true);
+      ctx.beginPath();
+      ctx.moveTo(cx-r*0.08, cy-r*1.02);
+      ctx.lineTo(cx+r*0.2, cy-r*1.48);
+      ctx.lineTo(cx+r*0.38, cy-r*0.92);
+      ctx.closePath();
+      ctx.fill();
+      break;
+  }
+  ctx.restore();
+}
+
+function drawFace(cx, cy, r, state, hairColor, skinColor, charData){
+  charData = charData || {};
+  ctx.save();
+
+  // 肌（顔のベース）
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = skinColor;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+
+  // 耳
+  ctx.fillStyle = skinColor;
+  [-1,1].forEach(s => {
+    ctx.beginPath();
+    ctx.ellipse(cx+s*r*0.94, cy+r*0.1, r*0.16, r*0.22, 0, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  // 髪（キャラクターごとにスタイルが違う）
+  drawHair(cx, cy, r, hairColor, charData.hair || 'spiky');
+
+  const isAngry = (state==='punch'||state==='kick'||state==='special'||state==='roundhouse'||state==='rocket'||state==='crouchkick');
+  const isHit = state==='hit';
+  const isKo = state==='ko';
+  const isGuard = state==='guard';
+  const isFemale = charData.gender === 'f';
+  const dark = '#33231a';
+  const eyeY = cy - r*0.03;
+  const eyeDX = r*0.4;
+
+  // まゆげ（女性キャラは少し細め）
+  if (!isKo){
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = Math.max(1.3, r*(isFemale?0.075:0.1));
+    ctx.lineCap = 'round';
+    [-1,1].forEach(s => {
+      const bx = cx + s*eyeDX, by = eyeY - r*0.42;
+      ctx.beginPath();
+      if (isAngry){ ctx.moveTo(bx-s*r*0.22, by+r*0.13); ctx.lineTo(bx+s*r*0.2, by-r*0.08); }
+      else if (isHit){ ctx.moveTo(bx-r*0.2, by-r*0.04); ctx.lineTo(bx+r*0.2, by+r*0.1); }
+      else { ctx.moveTo(bx-r*0.2, by); ctx.lineTo(bx+r*0.2, by-r*0.03); }
+      ctx.stroke();
+    });
+  }
+
+  // 目
+  if (isKo){
+    ctx.strokeStyle = dark; ctx.lineWidth = Math.max(1.4, r*0.09); ctx.lineCap='round';
+    [-1,1].forEach(s => {
+      const ex = cx+s*eyeDX;
+      ctx.beginPath(); ctx.moveTo(ex-r*0.14, eyeY-r*0.14); ctx.lineTo(ex+r*0.14, eyeY+r*0.14); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ex-r*0.14, eyeY+r*0.14); ctx.lineTo(ex+r*0.14, eyeY-r*0.14); ctx.stroke();
+    });
+  } else if (isHit){
+    ctx.strokeStyle = dark; ctx.lineWidth = Math.max(1.4, r*0.09); ctx.lineCap='round';
+    [-1,1].forEach(s => {
+      const ex = cx+s*eyeDX;
+      ctx.beginPath(); ctx.moveTo(ex-r*0.16, eyeY); ctx.lineTo(ex+r*0.16, eyeY); ctx.stroke();
+    });
+  } else {
+    [-1,1].forEach(s => {
+      const ex = cx+s*eyeDX;
+      ctx.beginPath();
+      ctx.fillStyle = '#fff';
+      ctx.ellipse(ex, eyeY, r*0.17, isAngry? r*0.12 : r*0.19, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.fillStyle = dark;
+      ctx.arc(ex, eyeY+r*0.02, r*0.085, 0, Math.PI*2);
+      ctx.fill();
+      if (isFemale){
+        ctx.strokeStyle = dark; ctx.lineWidth = Math.max(1,r*0.05); ctx.lineCap='round';
+        ctx.beginPath();
+        ctx.moveTo(ex+s*r*0.14, eyeY-r*0.16);
+        ctx.lineTo(ex+s*r*0.24, eyeY-r*0.26);
+        ctx.stroke();
+      }
+    });
+  }
+
+  // 口
+  const my = cy + r*0.5;
+  ctx.strokeStyle = dark;
+  ctx.lineWidth = Math.max(1.4, r*0.08);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  if (isAngry){
+    ctx.ellipse(cx, my, r*0.2, r*0.16, 0, 0, Math.PI*2);
+    ctx.fillStyle = '#7a2b28';
+    ctx.fill();
+  } else if (isHit){
+    ctx.moveTo(cx-r*0.18, my+r*0.06);
+    ctx.quadraticCurveTo(cx, my-r*0.1, cx+r*0.18, my+r*0.06);
+    ctx.stroke();
+  } else if (isKo){
+    ctx.moveTo(cx-r*0.2, my);
+    ctx.quadraticCurveTo(cx-r*0.1, my+r*0.08, cx, my);
+    ctx.quadraticCurveTo(cx+r*0.1, my-r*0.08, cx+r*0.2, my);
+    ctx.stroke();
+  } else if (isGuard){
+    ctx.moveTo(cx-r*0.15, my);
+    ctx.lineTo(cx+r*0.15, my);
+    ctx.stroke();
+  } else {
+    ctx.moveTo(cx-r*0.2, my-r*0.02);
+    ctx.quadraticCurveTo(cx, my+r*0.15, cx+r*0.2, my-r*0.02);
+    ctx.stroke();
+  }
+
+  // ひげ（対象キャラのみ）
+  if (charData.facialHair && !isKo){
+    ctx.fillStyle = '#2a2018';
+    ctx.beginPath();
+    ctx.ellipse(cx, my-r*0.16, r*0.3, r*0.09, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx, my+r*0.22, r*0.34, r*0.24, 0, 0, Math.PI);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawFighter(f){
+  if (f.char.id === 'mystery_boss'){ drawGorillaFighter(f); return; }
+
+  const sc = f.char.scale || 1;
+  const torsoW = TORSO_W * sc * (f.char.torsoWidthMult || 1);
+  const torsoH = TORSO_H * sc;
+  const headR = HEAD_R * sc * (f.char.headScale || 1);
+  const armW = ARM_W * sc;
+  const armLen = ARM_LEN * sc;
+  const legW = LEG_W * sc;
+  const legLenFull = LEG_LEN * sc;
+
+  const footY = GROUND_Y - f.height;
+  const isCrouch = f.state==='crouch' || f.state==='crouchkick';
+  const legLen = f.height>0 ? legLenFull*0.55 : (isCrouch ? legLenFull*0.55 : legLenFull);
+  const torsoHUsed = isCrouch ? torsoH*0.72 : torsoH;
+  const hipY = footY - legLen;
+  const shoulderY = hipY - torsoHUsed;
+  const headCY = shoulderY - headR - 6*sc;
+  const cx = f.x, dir = f.facing;
+
+  ctx.save();
+
+  // 影
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(cx, GROUND_Y+6, Math.max(14,38*sc - f.height*0.05), 8*sc, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  if (f.state==='ko'){
+    const t = Math.min(1, f.elapsed/380);
+    ctx.translate(cx, GROUND_Y);
+    ctx.rotate(dir * -Math.PI/2 * t * 0.9);
+    ctx.translate(-cx, -GROUND_Y);
+  }
+
+  if (f.state==='guard'){
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#8fd8ff';
+    ctx.beginPath();
+    ctx.ellipse(cx + dir*28*sc, shoulderY+torsoHUsed/2, 20*sc, torsoHUsed/2+30*sc, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+  if (f.state==='special'){
+    ctx.save();
+    const glow = ctx.createRadialGradient(cx,shoulderY+18*sc,10,cx,shoulderY+18*sc,95*sc);
+    glow.addColorStop(0, 'rgba(255,201,60,0.55)');
+    glow.addColorStop(1, 'rgba(255,201,60,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx, shoulderY+18*sc, 95*sc, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  const mainColor = f.state==='hit' ? '#ff6b6b' : f.char.color;
+  const darkColor = shadeColor(f.char.color, -35);
+
+  const punching = f.state==='punch';
+  const kicking = f.state==='kick';
+  const roundhousing = f.state==='roundhouse';
+  const rocketing = f.state==='rocket';
+  const guarding = f.state==='guard';
+  const special = f.state==='special';
+
+  let punchPhase = 4, kickPhase = 4, rhPhase = 4, rocketPhase = 4, crouchKickPhase = 4;
+  const punchMaxLen = f.stretchReach ? 54*sc*f.reachMult*0.8 : 54*sc;
+  const kickMaxLen = f.stretchReach ? 108*sc*f.reachMult*0.8 : 108*sc;
+  if (punching){ const cfg=ACTIONS.punch; punchPhase = f.elapsed<cfg.startup ? 10 : (f.elapsed<cfg.startup+cfg.active ? punchMaxLen : 14); }
+  if (kicking){ const cfg=ACTIONS.kick; kickPhase = f.elapsed<cfg.startup ? 10 : (f.elapsed<cfg.startup+cfg.active ? kickMaxLen : 14); }
+  if (roundhousing){ const cfg=ACTIONS.roundhouse; rhPhase = f.elapsed<cfg.startup ? 14 : (f.elapsed<cfg.startup+cfg.active ? 150*sc : 16); }
+  if (rocketing){ const cfg=ACTIONS.rocket; rocketPhase = f.elapsed<cfg.startup ? 12 : (f.elapsed<cfg.startup+cfg.active ? 60*sc : 16); }
+  if (f.state==='crouchkick'){ const cfg=ACTIONS.crouchkick; crouchKickPhase = f.elapsed<cfg.startup ? 10 : (f.elapsed<cfg.startup+cfg.active ? 96*sc : 14); }
+
+  const downAngle = Math.PI/2;
+  const fwdAngle = dir>0 ? 0 : Math.PI;
+
+  // 後ろ足・しっぽ（タケル＝ドラゴン／ワタル＝サル）
+  drawRotLimb(cx - dir*6*sc, hipY, downAngle, legLen, legW, darkColor, 'foot');
+  if (f.char.id==='takeru'){
+    ctx.save(); ctx.strokeStyle = darkColor; ctx.lineWidth = 9*sc; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(cx - dir*torsoW/2, hipY-4*sc);
+    ctx.quadraticCurveTo(cx - dir*(torsoW/2+26*sc), hipY+10*sc, cx - dir*(torsoW/2+10*sc), hipY-24*sc);
+    ctx.stroke(); ctx.restore();
+  } else if (f.char.id==='wataru'){
+    ctx.save(); ctx.strokeStyle = darkColor; ctx.lineWidth = 7*sc; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(cx - dir*torsoW/2, hipY-2*sc);
+    ctx.quadraticCurveTo(cx - dir*(torsoW/2+20*sc), hipY-30*sc, cx - dir*(torsoW/2-4*sc), hipY-40*sc);
+    ctx.stroke(); ctx.restore();
+  }
+
+  if (!guarding && !special){
+    drawRotLimb(cx - dir*(torsoW/2-2*sc), shoulderY+6*sc, downAngle, armLen*0.9, armW, darkColor, 'hand');
+  }
+
+  // 胴体
+  roundRect(ctx, cx-torsoW/2, shoulderY, torsoW, torsoHUsed, 11*sc);
+  ctx.fillStyle = mainColor; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 前足（キック時は伸びる／ワタルはさらに長く伸びる／タケルのかいてんげりは大きく回転／しゃがみ中は下段蹴り）
+  if (roundhousing){
+    const rhAngle = fwdAngle - dir*(30*Math.PI/180);
+    if (f.elapsed >= ACTIONS.roundhouse.startup*0.3){
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(cx + dir*6*sc, hipY-10*sc, Math.max(10,rhPhase*0.6), rhAngle - dir*2.0, rhAngle + dir*0.3, dir<0);
+      ctx.stroke();
+      ctx.restore();
+    }
+    drawRotLimb(cx + dir*6*sc, hipY-10*sc, rhAngle, rhPhase, legW+4*sc, mainColor, 'foot');
+  } else if (f.state==='crouchkick'){
+    const lowAngle = fwdAngle - dir*(4*Math.PI/180);
+    drawRotLimb(cx + dir*4*sc, hipY+legLen*0.32, lowAngle, crouchKickPhase, legW+2*sc, mainColor, 'foot');
+  } else if (kicking){
+    const kickAngle = fwdAngle - dir*(14*Math.PI/180);
+    drawRotLimb(cx + dir*6*sc, hipY-4*sc, kickAngle, kickPhase, f.stretchReach ? legW*0.68 : legW+2*sc, mainColor, 'foot');
+  } else {
+    drawRotLimb(cx + dir*6*sc, hipY, downAngle, legLen, legW, mainColor, 'foot');
+  }
+
+  // 前腕（パンチ／ガード／必殺技でポーズが変わる／ワタルのロケットパンチは手からロケット発射）
+  if (punching || rocketing){
+    drawRotLimb(cx + dir*(torsoW/2-2*sc), shoulderY+10*sc, fwdAngle, rocketing ? rocketPhase : punchPhase, f.stretchReach ? armW*0.68 : armW, mainColor, 'hand');
+  } else if (guarding){
+    drawRotLimb(cx + dir*(torsoW/2-6*sc), shoulderY+2*sc, fwdAngle - dir*40*Math.PI/180, 30*sc, armW+2*sc, mainColor, 'hand');
+    drawRotLimb(cx - dir*(torsoW/2-10*sc), shoulderY+12*sc, fwdAngle - dir*30*Math.PI/180, 26*sc, armW+2*sc, darkColor, 'hand');
+  } else if (special){
+    drawRotLimb(cx + dir*(torsoW/2-4*sc), shoulderY+8*sc, -Math.PI/2 - dir*0.35, armLen, armW, mainColor, 'hand');
+    drawRotLimb(cx - dir*(torsoW/2-4*sc), shoulderY+8*sc, -Math.PI/2 + dir*0.35, armLen, armW, mainColor, 'hand');
+  } else {
+    drawRotLimb(cx + dir*(torsoW/2-2*sc), shoulderY+6*sc, downAngle, armLen*0.9, armW, mainColor, 'hand');
+  }
+
+  // 頭（人間っぽい顔）
+  drawFace(cx, headCY, headR, f.state, f.char.color, f.char.skin, f.char);
+
+  ctx.restore();
+}
+
+/* ---------- 秘密の最終ボス：ゴリラ専用の描画（写真の白×金ゴリラをイメージ） ---------- */
+function drawGorillaFighter(f){
+  const sc = f.char.scale || 1.85;
+  const torsoW = 50 * sc * (f.char.torsoWidthMult || 1.5);
+  const torsoH = 52 * sc;
+  const headR = 27 * sc * (f.char.headScale || 1);
+  const armW = 17 * sc;
+  const armLen = 66 * sc;
+  const legW = 22 * sc;
+  const legLenFull = 30 * sc;
+
+  const footY = GROUND_Y - f.height;
+  const legLen = f.height>0 ? legLenFull*0.6 : legLenFull;
+  const hipY = footY - legLen;
+  const shoulderY = hipY - torsoH;
+  const headCY = shoulderY - headR*0.55;
+  const cx = f.x, dir = f.facing;
+
+  ctx.save();
+
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(cx, GROUND_Y+8, Math.max(20, 34*sc - f.height*0.05), 8*sc, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  if (f.state==='ko'){
+    const t = Math.min(1, f.elapsed/380);
+    ctx.translate(cx, GROUND_Y);
+    ctx.rotate(dir * -Math.PI/2 * t * 0.7);
+    ctx.translate(-cx, -GROUND_Y);
+  }
+
+  if (f.state==='guard'){
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#8fd8ff';
+    ctx.beginPath();
+    ctx.ellipse(cx+dir*40*sc/1.85, shoulderY+torsoH/2, 28*sc/1.85, torsoH/2+40*sc/1.85, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+  if (f.state==='special'){
+    ctx.save();
+    const glow = ctx.createRadialGradient(cx,shoulderY+20,15,cx,shoulderY+20,140);
+    glow.addColorStop(0, 'rgba(255,120,70,0.5)');
+    glow.addColorStop(1, 'rgba(255,120,70,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx, shoulderY+20, 140, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  const furColor = f.state==='hit' ? '#ffc4b6' : '#f2ede0';
+  const armFur = f.state==='hit' ? '#e8c04a' : '#c9a227';
+  const darkFur = shadeColor(furColor, -35);
+
+  const punching = f.state==='punch';
+  const kicking = f.state==='kick';
+  const guarding = f.state==='guard';
+  const special = f.state==='special';
+
+  let punchPhase = 4, kickPhase = 4;
+  const punchMaxLen = 260, kickMaxLen = 280;
+  if (punching){ const cfg=ACTIONS.punch; punchPhase = f.elapsed<cfg.startup ? 12 : (f.elapsed<cfg.startup+cfg.active ? punchMaxLen : 16); }
+  if (kicking){ const cfg=ACTIONS.kick; kickPhase = f.elapsed<cfg.startup ? 12 : (f.elapsed<cfg.startup+cfg.active ? kickMaxLen : 16); }
+
+  const downAngle = Math.PI/2;
+  const fwdAngle = dir>0 ? 0 : Math.PI;
+
+  drawRotLimb(cx - dir*10*sc, hipY, downAngle, legLen, legW, darkFur, 'foot');
+  if (!guarding && !special){
+    drawRotLimb(cx - dir*(torsoW/2-4*sc), shoulderY+10*sc, downAngle, armLen*0.85, armW, shadeColor(armFur,-20), 'hand');
+  }
+
+  roundRect(ctx, cx-torsoW/2, shoulderY, torsoW, torsoH, 16*sc);
+  ctx.fillStyle = furColor; ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  ctx.beginPath();
+  ctx.ellipse(cx, shoulderY+torsoH*0.16, torsoW*0.42, torsoH*0.22, 0, 0, Math.PI*2);
+  ctx.fillStyle = armFur;
+  ctx.fill();
+  ctx.restore();
+
+  if (kicking){
+    const kickAngle = fwdAngle - dir*(12*Math.PI/180);
+    drawRotLimb(cx + dir*10*sc, hipY-4*sc, kickAngle, kickPhase, legW+3*sc, furColor, 'foot');
+  } else {
+    drawRotLimb(cx + dir*10*sc, hipY, downAngle, legLen, legW, furColor, 'foot');
+  }
+
+  if (punching){
+    drawRotLimb(cx + dir*(torsoW/2-4*sc), shoulderY+14*sc, fwdAngle, punchPhase, armW*0.85, armFur, 'hand');
+  } else if (guarding){
+    drawRotLimb(cx + dir*(torsoW/2-8*sc), shoulderY+4*sc, fwdAngle - dir*38*Math.PI/180, 42*sc, armW+3*sc, armFur, 'hand');
+    drawRotLimb(cx - dir*(torsoW/2-14*sc), shoulderY+16*sc, fwdAngle - dir*28*Math.PI/180, 38*sc, armW+3*sc, shadeColor(armFur,-20), 'hand');
+  } else if (special){
+    drawRotLimb(cx + dir*(torsoW/2-6*sc), shoulderY+10*sc, -Math.PI/2 - dir*0.4, armLen, armW, armFur, 'hand');
+    drawRotLimb(cx - dir*(torsoW/2-6*sc), shoulderY+10*sc, -Math.PI/2 + dir*0.4, armLen, armW, armFur, 'hand');
+  } else {
+    drawRotLimb(cx + dir*(torsoW/2-4*sc), shoulderY+10*sc, downAngle, armLen*0.85, armW, armFur, 'hand');
+  }
+
+  drawGorillaFace(cx, headCY, headR, f.state);
+
+  ctx.restore();
+}
+
+function drawGorillaFace(cx, cy, r, state){
+  ctx.save();
+  const skin = '#e8dfce';
+  const isAngry = state==='punch'||state==='kick'||state==='special'||state==='gorillaShot';
+
+  ctx.beginPath();
+  ctx.ellipse(cx, cy-r*0.62, r*0.72, r*0.5, 0, 0, Math.PI*2);
+  ctx.fillStyle = '#f2ede0';
+  ctx.fill();
+
+  ctx.fillStyle = skin;
+  [-1,1].forEach(s => { ctx.beginPath(); ctx.ellipse(cx+s*r*0.92, cy-r*0.05, r*0.17, r*0.24, 0, 0, Math.PI*2); ctx.fill(); });
+
+  ctx.beginPath();
+  ctx.ellipse(cx, cy+r*0.12, r*1.0, r*0.92, 0, 0, Math.PI*2);
+  ctx.fillStyle = skin;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+
+  ctx.fillStyle = shadeColor(skin,-30);
+  ctx.beginPath();
+  ctx.ellipse(cx, cy-r*0.22, r*0.8, r*0.2, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  const eyeY = cy-r*0.18, eyeDX = r*0.32;
+  [-1,1].forEach(s => {
+    ctx.beginPath(); ctx.fillStyle = '#eaf6fb';
+    ctx.ellipse(cx+s*eyeDX, eyeY, r*0.13, isAngry?r*0.08:r*0.11, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.fillStyle = '#5fb2d6';
+    ctx.arc(cx+s*eyeDX, eyeY, r*0.06, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.fillStyle = '#1a1a1a';
+    ctx.arc(cx+s*eyeDX, eyeY, r*0.03, 0, Math.PI*2); ctx.fill();
+  });
+
+  ctx.strokeStyle = '#3a3a3a';
+  ctx.lineWidth = Math.max(1.6, r*0.08);
+  ctx.lineCap = 'round';
+  [-1,1].forEach(s => {
+    ctx.beginPath();
+    if (isAngry){ ctx.moveTo(cx+s*eyeDX-s*r*0.18, eyeY-r*0.28); ctx.lineTo(cx+s*eyeDX+s*r*0.18, eyeY-r*0.42); }
+    else { ctx.moveTo(cx+s*eyeDX-r*0.16, eyeY-r*0.32); ctx.lineTo(cx+s*eyeDX+r*0.16, eyeY-r*0.34); }
+    ctx.stroke();
+  });
+
+  ctx.fillStyle = shadeColor(skin,-45);
+  ctx.beginPath(); ctx.ellipse(cx, cy+r*0.28, r*0.26, r*0.18, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#1c1c1c';
+  [-1,1].forEach(s => { ctx.beginPath(); ctx.ellipse(cx+s*r*0.11, cy+r*0.3, r*0.05, r*0.07, 0, 0, Math.PI*2); ctx.fill(); });
+
+  ctx.strokeStyle = '#2a2a2a';
+  ctx.lineWidth = Math.max(1.8, r*0.09);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  if (isAngry){ ctx.moveTo(cx-r*0.42, cy+r*0.55); ctx.quadraticCurveTo(cx, cy+r*0.78, cx+r*0.42, cy+r*0.55); }
+  else if (state==='hit'){ ctx.moveTo(cx-r*0.3, cy+r*0.62); ctx.quadraticCurveTo(cx, cy+r*0.5, cx+r*0.3, cy+r*0.62); }
+  else if (state==='ko'){ ctx.moveTo(cx-r*0.3, cy+r*0.58); ctx.quadraticCurveTo(cx-r*0.15, cy+r*0.68, cx, cy+r*0.58); ctx.quadraticCurveTo(cx+r*0.15, cy+r*0.48, cx+r*0.3, cy+r*0.58); }
+  else { ctx.moveTo(cx-r*0.32, cy+r*0.58); ctx.lineTo(cx+r*0.32, cy+r*0.58); }
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawProjectile(){
+  if (!projectile) return;
+  ctx.save();
+  ctx.font = '46px "Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(projectile.emoji, projectile.x, projectile.y);
+  ctx.restore();
+}
+
+function drawFloatTexts(){
+  floatTexts.forEach(t => {
+    const p = 1 - Math.max(0, t.life)/700;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, t.life/700);
+    ctx.fillStyle = t.color;
+    ctx.font = '800 20px "Baloo 2",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(t.text, t.x, t.y - p*30);
+    ctx.restore();
+  });
+}
+
+function drawStage(){
+  if (currentStage === 'desert') drawStageDesert();
+  else if (currentStage === 'dojo') drawStageDojo();
+  else drawStageNeon();
+}
+
+function drawStageNeon(){
+  const g = ctx.createLinearGradient(0,0,0,GROUND_Y);
+  g.addColorStop(0, '#0b0f2e');
+  g.addColorStop(0.6, '#241448');
+  g.addColorStop(1, '#3a1650');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,STAGE_W,GROUND_Y);
+
+  // ビルのシルエット
+  const buildings = [[0,60,90],[85,20,65],[155,95,55],[215,40,75],[295,75,60],
+                      [430,55,65],[500,90,55],[560,25,80],[645,70,60],[710,45,90]];
+  ctx.fillStyle = '#1c1440';
+  buildings.forEach(([x,topY,w]) => { ctx.fillRect(x, topY, w, GROUND_Y-topY); });
+  // 窓の明かり
+  buildings.forEach(([x,topY,w], bi) => {
+    for (let k=0;k<7;k++){
+      if ((k+bi)%3===0) continue;
+      const wx = x + 10 + (k%3)*(w-24)/2;
+      const wy = topY + 14 + Math.floor(k/3)*18;
+      if (wy > GROUND_Y-10) continue;
+      ctx.fillStyle = (k+bi)%2===0 ? 'rgba(255,224,138,0.55)' : 'rgba(120,220,255,0.5)';
+      ctx.fillRect(wx, wy, 6, 8);
+    }
+  });
+
+  // ネオンの水平ライン
+  ctx.save();
+  ctx.shadowBlur = 16; ctx.shadowColor = '#ff5dd6';
+  ctx.strokeStyle = 'rgba(255,93,214,0.7)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, GROUND_Y-2); ctx.lineTo(STAGE_W, GROUND_Y-2); ctx.stroke();
+  ctx.restore();
+
+  // 地面
+  ctx.fillStyle = '#120c26';
+  ctx.fillRect(0,GROUND_Y,STAGE_W,STAGE_H-GROUND_Y);
+  ctx.strokeStyle = 'rgba(120,220,255,0.16)'; ctx.lineWidth = 1.5;
+  for (let i=0;i<5;i++){
+    const y = GROUND_Y + 10 + i*15;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(STAGE_W,y); ctx.stroke();
+  }
+  for (let i=0;i<9;i++){
+    const x = i*100;
+    ctx.beginPath(); ctx.moveTo(x,GROUND_Y); ctx.lineTo(x + (x-400)*0.15, STAGE_H); ctx.stroke();
+  }
+}
+
+function drawStageDesert(){
+  const g = ctx.createLinearGradient(0,0,0,GROUND_Y);
+  g.addColorStop(0, '#ff9d5c');
+  g.addColorStop(0.55, '#ffb96b');
+  g.addColorStop(1, '#ffe08a');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,STAGE_W,GROUND_Y);
+
+  // 太陽
+  ctx.save();
+  const sunGlow = ctx.createRadialGradient(650,95,10,650,95,110);
+  sunGlow.addColorStop(0,'rgba(255,255,230,0.9)');
+  sunGlow.addColorStop(1,'rgba(255,255,230,0)');
+  ctx.fillStyle = sunGlow;
+  ctx.beginPath(); ctx.arc(650,95,110,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff6d8';
+  ctx.beginPath(); ctx.arc(650,95,42,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // ピラミッド
+  ctx.fillStyle = '#b9793f';
+  [[120,140,95],[255,100,68],[705,155,105]].forEach(([cx,w,h]) => {
+    ctx.beginPath();
+    ctx.moveTo(cx-w/2, GROUND_Y);
+    ctx.lineTo(cx, GROUND_Y-h);
+    ctx.lineTo(cx+w/2, GROUND_Y);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.fillStyle = '#a5672f';
+  [[120,140,95],[705,155,105]].forEach(([cx,w,h]) => {
+    ctx.beginPath();
+    ctx.moveTo(cx, GROUND_Y-h);
+    ctx.lineTo(cx+w/2, GROUND_Y);
+    ctx.lineTo(cx+w/6, GROUND_Y);
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  // 地面（砂）
+  const sg = ctx.createLinearGradient(0,GROUND_Y,0,STAGE_H);
+  sg.addColorStop(0,'#e8b169'); sg.addColorStop(1,'#c98a4a');
+  ctx.fillStyle = sg;
+  ctx.fillRect(0,GROUND_Y,STAGE_W,STAGE_H-GROUND_Y);
+
+  ctx.strokeStyle = 'rgba(120,70,20,0.25)'; ctx.lineWidth = 3; ctx.lineCap='round';
+  for (let i=0;i<6;i++){
+    const y = GROUND_Y + 14 + i*11;
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    for (let x=0;x<=STAGE_W;x+=40){
+      ctx.lineTo(x, y + Math.sin((x+i*37)/60)*3);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawStageDojo(){
+  const g = ctx.createLinearGradient(0,0,0,GROUND_Y);
+  g.addColorStop(0, '#12362c');
+  g.addColorStop(0.6, '#1e4a3a');
+  g.addColorStop(1, '#3f6b4f');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,STAGE_W,GROUND_Y);
+
+  // 遠くの山
+  ctx.fillStyle = 'rgba(10,30,24,0.55)';
+  ctx.beginPath();
+  ctx.moveTo(0,GROUND_Y-40);
+  ctx.quadraticCurveTo(160,GROUND_Y-160, 320,GROUND_Y-70);
+  ctx.quadraticCurveTo(480,GROUND_Y-10, 620,GROUND_Y-110);
+  ctx.quadraticCurveTo(740,GROUND_Y-170, STAGE_W,GROUND_Y-60);
+  ctx.lineTo(STAGE_W,GROUND_Y);
+  ctx.lineTo(0,GROUND_Y);
+  ctx.closePath();
+  ctx.fill();
+
+  // 竹
+  const bambooX = [30,95,150,230,300,500,570,650,720,780];
+  bambooX.forEach((x,i) => {
+    const h = 130 + (i%3)*40;
+    const topY = GROUND_Y - h;
+    ctx.fillStyle = i%2===0 ? '#4c8a5e' : '#3f7550';
+    roundRect(ctx, x-7, topY, 14, h, 6);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1.5;
+    for (let s=1;s<4;s++){
+      const sy = topY + (h/4)*s;
+      ctx.beginPath(); ctx.moveTo(x-7,sy); ctx.lineTo(x+7,sy); ctx.stroke();
+    }
+    ctx.fillStyle = '#5da072';
+    ctx.beginPath();
+    ctx.ellipse(x+8, topY+10, 14, 5, -0.5, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  // 地面（木の床）
+  const wg = ctx.createLinearGradient(0,GROUND_Y,0,STAGE_H);
+  wg.addColorStop(0,'#6b4426'); wg.addColorStop(1,'#4a2e19');
+  ctx.fillStyle = wg;
+  ctx.fillRect(0,GROUND_Y,STAGE_W,STAGE_H-GROUND_Y);
+  ctx.strokeStyle = 'rgba(255,224,180,0.14)'; ctx.lineWidth = 1.5;
+  for (let i=0;i<5;i++){
+    const y = GROUND_Y + 8 + i*15;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(STAGE_W,y); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  for (let x=0;x<STAGE_W;x+=90){
+    ctx.beginPath(); ctx.moveTo(x,GROUND_Y); ctx.lineTo(x,STAGE_H); ctx.stroke();
+  }
+}
+
+function render(){
+  ctx.clearRect(0,0,STAGE_W,STAGE_H);
+  drawStage();
+  const order = player.height >= enemy.height ? [enemy, player] : [player, enemy];
+  drawFighter(order[0]);
+  drawFighter(order[1]);
+  drawProjectile();
+  drawFloatTexts();
+}
+
+/* ---------- メインループ ---------- */
+function loop(ts){
+  if (!engineRunning) return;
+  if (!lastTs) lastTs = ts;
+  let dt = (ts - lastTs)/1000;
+  dt = Math.min(dt, 0.035);
+  lastTs = ts;
+
+  if (!isPaused){
+    updateEngine(dt);
+    render();
+  }
+  rafId = requestAnimationFrame(loop);
+}
+
+function startEngine(){
+  if (engineRunning) return;
+  engineRunning = true;
+  lastTs = 0;
+  rafId = requestAnimationFrame(loop);
+}
+function stopEngine(){
+  engineRunning = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  rawKeysDown.clear();
+  document.querySelectorAll('.key-chip').forEach(c=>c.classList.remove('active'));
+  stopMusic();
+}
+</script>
+</body>
+</html>
